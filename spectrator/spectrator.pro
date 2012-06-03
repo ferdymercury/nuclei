@@ -12,9 +12,15 @@ TEMPLATE = app
 
 SOURCES += main.cpp\
         Spectrator.cpp \
-    ENSDF.cpp
+    ENSDF.cpp \
+    Decay.cpp \
+    EnergyLevel.cpp \
+    Nuclide.cpp
 
 HEADERS  += Spectrator.h \
-    ENSDF.h
+    ENSDF.h \
+    Decay.h \
+    EnergyLevel.h \
+    Nuclide.h
 
 FORMS    += Spectrator.ui

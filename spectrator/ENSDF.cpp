@@ -4,7 +4,7 @@
 #include <QChar>
 #include <QMap>
 #include <QLocale>
-#include <iostream>
+#include "Decay.h"
 
 QString ENSDF::path = "../ensdf";
 
@@ -59,48 +59,19 @@ QMap<QString, QString> ENSDF::decays(const QString &daughterNuclide) const
     QString nucid(parts.at(1).rightJustified(3, ' '));
     nucid.append(parts.at(0).toUpper().leftJustified(2, ' '));
 
-    QStringList decs = contents.filter(QRegExp("^" + nucid + "\\s{4,4}[\\s0-9]{3,3}[\\sA-Z]{2,2}\\s(B-|B\\+|EC|IT|A\\s)\\sDECAY"));
     QMap<QString, QString> result;
-    foreach (QString dec, decs) {
-        QString text(dec.mid(12, 2).trimmed());
-        if (text.size() == 2)
-            text[1] = text.at(1).toLower();
-        text.append("-" + dec.mid(9, 3).trimmed() + ", ");
-        QString type(dec.mid(15, 2));
-        if (type == "EC")
-            text.append("Electron Capture");
-        else if (type == "B+")
-            text.append(QString::fromUtf8("β+"));
-        else if (type == "B-")
-            text.append(QString::fromUtf8("β-"));
-        else if (type == "IT")
-            text.append("Isomeric Transition");
-        else if (type == "A ")
-            text.append("Alpha");
-        if (dec.at(24) == '(') {
-            QString timeinfo(dec.replace(QRegExp("^.*\\((.+)\\).*$"), "\\1"));
-            QStringList timeparts = timeinfo.split(' ');
-            if (timeparts.size() >= 2) {
-                QLocale clocale("C");
-                QLocale loclocale;
-                text.append(", T1/2 = " + loclocale.toString(clocale.toFloat(timeparts.at(0))));
-                if (timeparts.at(1) == "Y")
-                    text.append(" a");
-                else if (timeparts.at(1) == "US")
-                    text.append(QString::fromUtf8(" µs"));
-                else if (timeparts.at(1) == "EV")
-                    text.append(" eV");
-                else if (timeparts.at(1) == "KEV")
-                    text.append(" keV");
-                else if (timeparts.at(1) == "MEV")
-                    text.append(" MeV");
-                else
-                    text.append(" " + timeparts.at(1).toLower());
-            }
-        }
-        result[dec] = text;
+    int start = -1;
+    int stop = 0;
+    while ((start = contents.indexOf(QRegExp("^" + nucid + "\\s{4,4}[\\s0-9]{3,3}[\\sA-Z]{2,2}\\s(B-|B\\+|EC|IT|A\\s)\\sDECAY.*"), stop)), start >= 0) {
+        stop = contents.indexOf(QRegExp("^\\s*$"), start);
+        if (stop < 0)
+            stop = contents.size();
+        QStringList dec(contents.mid(start, stop-start));
+        if (dec.isEmpty())
+            continue;
+        Decay d(dec);
+        result[dec.at(0)] = d.toText();
     }
     return result;
 }
 
-//111CD    111AG B- DECAY (7.45 D)
