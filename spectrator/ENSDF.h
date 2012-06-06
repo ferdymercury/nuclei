@@ -1,6 +1,9 @@
 #ifndef ENSDF_H
 #define ENSDF_H
 #include <QStringList>
+#include <QSharedPointer>
+
+class Decay;
 
 class ENSDF
 {
@@ -11,7 +14,7 @@ public:
 
     static QStringList aValues();
     QStringList daughterNuclides() const;
-    QMap<QString, QString> decays(const QString &daughterNuclide) const;
+    QList< QSharedPointer<Decay> > decays(const QString &daughterNuclide) const;
 
 private:
     static QString path;

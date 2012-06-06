@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>983</width>
-    <height>663</height>
+    <width>1002</width>
+    <height>779</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -31,6 +31,12 @@
              <verstretch>0</verstretch>
             </sizepolicy>
            </property>
+           <property name="maximumSize">
+            <size>
+             <width>16777215</width>
+             <height>130</height>
+            </size>
+           </property>
           </widget>
          </item>
         </layout>
@@ -49,6 +55,12 @@
              <horstretch>0</horstretch>
              <verstretch>0</verstretch>
             </sizepolicy>
+           </property>
+           <property name="maximumSize">
+            <size>
+             <width>16777215</width>
+             <height>130</height>
+            </size>
            </property>
           </widget>
          </item>
@@ -69,6 +81,12 @@
              <verstretch>0</verstretch>
             </sizepolicy>
            </property>
+           <property name="maximumSize">
+            <size>
+             <width>16777215</width>
+             <height>130</height>
+            </size>
+           </property>
           </widget>
          </item>
         </layout>
@@ -87,25 +105,7 @@
        </attribute>
        <layout class="QVBoxLayout" name="verticalLayout_4">
         <item>
-         <widget class="QPlainTextEdit" name="plainTextEdit"/>
-        </item>
-        <item>
-         <widget class="QScrollArea" name="scrollArea">
-          <property name="widgetResizable">
-           <bool>true</bool>
-          </property>
-          <widget class="QWidget" name="scrollAreaWidgetContents">
-           <property name="geometry">
-            <rect>
-             <x>0</x>
-             <y>0</y>
-             <width>953</width>
-             <height>137</height>
-            </rect>
-           </property>
-           <layout class="QHBoxLayout" name="horizontalLayout_2"/>
-          </widget>
-         </widget>
+         <widget class="QGraphicsView" name="decayView"/>
         </item>
        </layout>
       </widget>
@@ -118,7 +118,7 @@
     <rect>
      <x>0</x>
      <y>0</y>
-     <width>983</width>
+     <width>1002</width>
      <height>20</height>
     </rect>
    </property>

@@ -1,6 +1,8 @@
 #include "Decay.h"
 #include <QDebug>
 #include <QLocale>
+#include <QGraphicsScene>
+#include <QGraphicsLineItem>
 #include <cmath>
 
 Decay::Decay(Nuclide parentNuclide, Nuclide daughterNuclide, Type decayType, QObject *parent)
@@ -12,7 +14,7 @@ Decay::Decay(Nuclide parentNuclide, Nuclide daughterNuclide, Type decayType, QOb
  * Processes a decay header from an ENSDF data file
  */
 Decay::Decay(const QStringList &ensdfData, QObject *parent)
-    : QObject(parent), ensdf(ensdfData)
+    : QObject(parent), ensdf(ensdfData), scene(0)
 {
     Q_ASSERT(!ensdf.isEmpty());
 
@@ -69,6 +71,26 @@ QString Decay::decayTypeAsText() const
         return "Alpha";
     }
     return "";
+}
+
+QGraphicsScene *Decay::levelPlot()
+{
+    if (!scene) {
+        processENSDFLevels();
+
+        scene = new QGraphicsScene(this);
+
+        foreach (EnergyLevel level, levels) {
+            QGraphicsItemGroup *group = new QGraphicsItemGroup;
+            QGraphicsLineItem *line = new QGraphicsLineItem(-100, 0, 100, 0, group);
+            group->addToGroup(line);
+            QGraphicsTextItem *text = new QGraphicsTextItem(level.energyAsText(), group);
+            group->addToGroup(text);
+
+            scene->addItem(group);
+        }
+    }
+    return scene;
 }
 
 QString Decay::toText() const
@@ -134,7 +156,7 @@ void Decay::processENSDFLevels() const
             // determine energy
             QString estr(line.mid(9, 10));
             estr.remove('(').remove(')');
-            double e = clocale.toDouble(estr.trimmed());
+            uint64_t e = uint64_t(clocale.toDouble(estr.trimmed())*1000.+0.5);
             // determine spin
             QString spstr(line.mid(21, 17));
             spstr.remove('(').remove(')');
@@ -157,7 +179,8 @@ void Decay::processENSDFLevels() const
             hlstr.remove('(').remove(')');
             double hl = ensdfTimeToSecs(hlstr.trimmed());
 
-            EnergyLevel el(e*1000., spin, hl);
+            EnergyLevel el(e, spin, hl);
+            levels.insert(e, el);
         }
     }
 }

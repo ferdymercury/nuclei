@@ -50,16 +50,19 @@ QStringList ENSDF::daughterNuclides() const
     return result;
 }
 
-QMap<QString, QString> ENSDF::decays(const QString &daughterNuclide) const
+/**
+ * Receiver is responsible for deleting the returned objects
+ */
+QList< QSharedPointer<Decay> > ENSDF::decays(const QString &daughterNuclide) const
 {
     // recover nuclide identification (NUCID)
     QStringList parts = daughterNuclide.split('-');
     if (parts.size() < 2)
-        return QMap<QString, QString>();
+        return QList< QSharedPointer<Decay> >();
     QString nucid(parts.at(1).rightJustified(3, ' '));
     nucid.append(parts.at(0).toUpper().leftJustified(2, ' '));
 
-    QMap<QString, QString> result;
+    QList< QSharedPointer<Decay> > result;
     int start = -1;
     int stop = 0;
     while ((start = contents.indexOf(QRegExp("^" + nucid + "\\s{4,4}[\\s0-9]{3,3}[\\sA-Z]{2,2}\\s(B-|B\\+|EC|IT|A\\s)\\sDECAY.*"), stop)), start >= 0) {
@@ -69,8 +72,7 @@ QMap<QString, QString> ENSDF::decays(const QString &daughterNuclide) const
         QStringList dec(contents.mid(start, stop-start));
         if (dec.isEmpty())
             continue;
-        Decay d(dec);
-        result[dec.at(0)] = d.toText();
+        result.append(QSharedPointer<Decay>(new Decay(dec)));
     }
     return result;
 }

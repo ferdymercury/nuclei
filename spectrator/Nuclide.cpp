@@ -38,18 +38,18 @@ QString Nuclide::halfLifeAsText() const
     if (hlSecs > 60.* 2.)
         return QString("%1 min").arg(hlSecs / 60.);
 
-    if (hlSecs < 1.)
-        return QString("%1 ms").arg(hlSecs * 1.E3);
-    if (hlSecs < 1.E-3)
-        return QString::fromUtf8("%1 µs").arg(hlSecs * 1.E6);
-    if (hlSecs < 1.E-6)
-        return QString("%1 ns").arg(hlSecs * 1.E9);
-    if (hlSecs < 1.E-9)
-        return QString("%1 ps").arg(hlSecs * 1.E12);
-    if (hlSecs < 1.E-12)
-        return QString("%1 fs").arg(hlSecs * 1.E15);
     if (hlSecs < 1.E-15)
         return QString("%1 as").arg(hlSecs * 1.E18);
+    if (hlSecs < 1.E-12)
+        return QString("%1 fs").arg(hlSecs * 1.E15);
+    if (hlSecs < 1.E-9)
+        return QString("%1 ps").arg(hlSecs * 1.E12);
+    if (hlSecs < 1.E-6)
+        return QString("%1 ns").arg(hlSecs * 1.E9);
+    if (hlSecs < 1.E-3)
+        return QString::fromUtf8("%1 µs").arg(hlSecs * 1.E6);
+    if (hlSecs < 1.)
+        return QString("%1 ms").arg(hlSecs * 1.E3);
 
     return QString("%1 s").arg(hlSecs);
 }
@@ -70,5 +70,5 @@ QString Nuclide::formattedName() const
  */
 QString Nuclide::nucid() const
 {
-    return QString("%1%2").arg(m_A, 3, 10, QChar(' ')).arg(el.leftJustified(2, ' '));
+    return QString("%1%2").arg(m_A, 3, 10, QChar(' ')).arg(el.leftJustified(2, ' ').toUpper());
 }

@@ -7,6 +7,8 @@
 #include "Nuclide.h"
 #include "EnergyLevel.h"
 
+class QGraphicsScene;
+
 class Decay : public QObject
 {
     Q_OBJECT
@@ -23,6 +25,7 @@ public:
     explicit Decay(const QStringList &ensdfData, QObject *parent = 0);
 
     QString decayTypeAsText() const;
+    QGraphicsScene * levelPlot();
 
     QString toText() const;
 
@@ -39,6 +42,7 @@ private:
 
     QStringList ensdf;
     mutable QMap<unsigned int, EnergyLevel> levels;
+    QGraphicsScene *scene;
 };
 
 #endif // DECAY_H

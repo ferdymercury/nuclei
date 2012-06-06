@@ -2,6 +2,7 @@
 #include "ui_Spectrator.h"
 #include "ENSDF.h"
 
+Q_DECLARE_METATYPE( QSharedPointer<Decay> )
 
 Spectrator::Spectrator(QWidget *parent) :
     QMainWindow(parent),
@@ -11,12 +12,14 @@ Spectrator::Spectrator(QWidget *parent) :
     ui->setupUi(this);
     ui->aListWidget->addItems(ENSDF::aValues());
     if (ui->aListWidget->count()) {
-        ui->aListWidget->setCurrentRow(0);
-        selectedA(ui->aListWidget->item(0)->text());
+        // initialize selection
+        ui->aListWidget->setCurrentRow(110);
+        selectedA(ui->aListWidget->item(110)->text());
     }
 
     connect(ui->aListWidget, SIGNAL(currentTextChanged(QString)), this, SLOT(selectedA(QString)));
     connect(ui->nuclideListWidget, SIGNAL(currentTextChanged(QString)), this, SLOT(selectedNuclide(QString)));
+    connect(ui->decayListWidget, SIGNAL(currentItemChanged(QListWidgetItem*,QListWidgetItem*)), this, SLOT(selectedDecay(QListWidgetItem*,QListWidgetItem*)));
 }
 
 Spectrator::~Spectrator()
@@ -26,6 +29,10 @@ Spectrator::~Spectrator()
 
 void Spectrator::selectedA(const QString &a)
 {
+    ui->decayListWidget->clear();
+    decays.clear();
+    ui->decayView->setScene(0);
+
     delete currentMassChain;
     currentMassChain = new ENSDF(a.toInt());
 
@@ -40,12 +47,21 @@ void Spectrator::selectedNuclide(const QString &nuclide)
         return;
 
     ui->decayListWidget->clear();
+    decays.clear();
+    ui->decayView->setScene(0);
 
-    QMap<QString, QString> decays = currentMassChain->decays(nuclide);
-    QMap<QString, QString>::const_iterator i = decays.constBegin();
-    while (i != decays.constEnd()) {
-        QListWidgetItem *item = new QListWidgetItem(i.value(), ui->decayListWidget);
-        item->setData(Qt::UserRole, i.key());
-        i++;
+    decays = currentMassChain->decays(nuclide);
+    for (int i=0; i<decays.size(); i++) {
+        QListWidgetItem *item = new QListWidgetItem(decays.at(i)->toText(), ui->decayListWidget);
+        item->setData(Qt::UserRole, QVariant::fromValue(decays.at(i)));
     }
+}
+
+void Spectrator::selectedDecay(QListWidgetItem* newitem, QListWidgetItem*)
+{
+    if (!newitem)
+        return;
+
+    QSharedPointer<Decay> decay = newitem->data(Qt::UserRole).value< QSharedPointer<Decay> >();
+    ui->decayView->setScene(decay->levelPlot());
 }

@@ -2,11 +2,13 @@
 #define SPECTRATOR_H
 
 #include <QMainWindow>
+#include "Decay.h"
 
 namespace Ui {
 class Spectrator;
 }
 class ENSDF;
+class QListWidgetItem;
 
 class Spectrator : public QMainWindow
 {
@@ -19,11 +21,13 @@ public:
 private slots:
     void selectedA(const QString &a);
     void selectedNuclide(const QString &nuclide);
+    void selectedDecay(QListWidgetItem* newitem, QListWidgetItem*);
     
 private:
     Ui::Spectrator *ui;
 
     ENSDF *currentMassChain;
+    QList< QSharedPointer<Decay> > decays;
 };
 
 #endif // SPECTRATOR_H
