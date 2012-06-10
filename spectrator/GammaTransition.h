@@ -6,7 +6,7 @@
 #include <QPen>
 
 class QGraphicsItem;
-class QGraphicsItemGroup;
+class ActiveGraphicsItemGroup;
 class QGraphicsLineItem;
 class QGraphicsTextItem;
 class QGraphicsPolygonItem;
@@ -34,7 +34,7 @@ private:
     double intens;
     EnergyLevel *m_start, *m_dest;
 
-    QGraphicsItemGroup *item;
+    ActiveGraphicsItemGroup *item;
     QGraphicsLineItem *arrow;
     QGraphicsTextItem *text;
     QGraphicsPolygonItem *arrowhead, *arrowbase;

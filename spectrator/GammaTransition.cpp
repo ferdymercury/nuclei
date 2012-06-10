@@ -1,11 +1,11 @@
 #include "GammaTransition.h"
 
-#include <QGraphicsItemGroup>
 #include <QGraphicsTextItem>
 #include <QFontMetrics>
 #include <QList>
 #include <QTextDocument>
 #include <cmath>
+#include "ActiveGraphicsItemGroup.h"
 #include "EnergyLevel.h"
 
 const double GammaTransition::textAngle = -60.0;
@@ -42,7 +42,7 @@ QGraphicsItem *GammaTransition::createGammaGraphicsItem(const QFont &gammaFont, 
     // group origin is set to the start level!
     double arrowDestY = m_dest->graYPos - m_start->graYPos;
 
-    item = new QGraphicsItemGroup;
+    item = new ActiveGraphicsItemGroup;
 
     arrowhead = new QGraphicsPolygonItem(arrowHeadShape);
     arrowhead->setBrush(QBrush(m_pen.color()));

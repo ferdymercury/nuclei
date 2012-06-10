@@ -9,7 +9,7 @@
 #include "SpinParity.h"
 #include "GammaTransition.h"
 
-class QGraphicsItemGroup;
+class ActiveGraphicsItemGroup;
 class QGraphicsLineItem;
 class QGraphicsSimpleTextItem;
 class QGraphicsPolygonItem;
@@ -22,6 +22,8 @@ public:
                 HalfLife halfLife = HalfLife(std::numeric_limits<double>::infinity()),
                 unsigned int isomerNum = 0
                 );
+
+    ~EnergyLevel();
 
     int64_t energyEv() const;
     SpinParity spin() const;
@@ -48,7 +50,7 @@ private:
     QList<GammaTransition*> m_populatingTransitions;
     QList<GammaTransition*> m_depopulatingTransitions;
 
-    QGraphicsItemGroup *gragroup;
+    ActiveGraphicsItemGroup *gragroup;
     QGraphicsLineItem *graline, *grafeedarrow;
     QGraphicsPolygonItem *graarrowhead;
     QGraphicsSimpleTextItem *graetext, *graspintext, *grahltext, *grafeedintens;

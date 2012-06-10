@@ -3,8 +3,10 @@
 #include <QLocale>
 #include <QGraphicsScene>
 #include <QGraphicsLineItem>
+#include <QGraphicsDropShadowEffect>
 #include <QFontMetrics>
 #include <cmath>
+#include "ActiveGraphicsItemGroup.h"
 #include "EnergyLevel.h"
 #include "GammaTransition.h"
 
@@ -169,7 +171,7 @@ QGraphicsScene * Decay::levelPlot()
         double maxEnergyLabelWidth = 0.0;
         double maxSpinLabelWidth = 0.0;
         foreach (EnergyLevel *level, levels) {
-            level->gragroup = new QGraphicsItemGroup;
+            level->gragroup = new ActiveGraphicsItemGroup;
 
             level->graline = new QGraphicsLineItem(-outerGammaMargin, 0.0, outerGammaMargin, 0.0, level->gragroup);
             level->graline->setPen(levelPen);
@@ -338,7 +340,9 @@ QGraphicsScene * Decay::levelPlot()
                 levelHlPos = rightlinelength + levelToHalfLifeDistance;
             }
             level->grahltext->setPos(levelHlPos, -0.5*stdBoldFontMetrics.height());
+
             level->gragroup->moveBy(0.0, level->graYPos); // add 0.5*pen-width to avoid antialiasing artifacts
+
             if (level->grafeedarrow) {
                 double leftend = (parentpos == RightParent) ? rightlinelength + arrowGap + arrowHeadLength : -leftlinelength - pNucLineLength - parentNuclideLevelLineExtraLength;
                 double rightend = (parentpos == RightParent) ? rightlinelength + pNucLineLength + parentNuclideLevelLineExtraLength : -leftlinelength - arrowGap - arrowHeadLength;

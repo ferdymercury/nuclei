@@ -18,7 +18,8 @@ SOURCES += main.cpp\
     Nuclide.cpp \
     HalfLife.cpp \
     SpinParity.cpp \
-    GammaTransition.cpp
+    GammaTransition.cpp \
+    ActiveGraphicsItemGroup.cpp
 
 HEADERS  += Spectrator.h \
     ENSDF.h \
@@ -27,6 +28,7 @@ HEADERS  += Spectrator.h \
     Nuclide.h \
     HalfLife.h \
     SpinParity.h \
-    GammaTransition.h
+    GammaTransition.h \
+    ActiveGraphicsItemGroup.h
 
 FORMS    += Spectrator.ui

@@ -8,6 +8,14 @@ EnergyLevel::EnergyLevel(int64_t energyEV, SpinParity spin, HalfLife halfLife, u
 {
 }
 
+EnergyLevel::~EnergyLevel()
+{
+    for (int i=0; i<m_depopulatingTransitions.size(); i++)
+        delete m_depopulatingTransitions.at(i);
+    m_depopulatingTransitions.clear();
+    m_populatingTransitions.clear();
+}
+
 int64_t EnergyLevel::energyEv() const
 {
     return e;
