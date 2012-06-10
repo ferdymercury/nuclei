@@ -1,12 +1,9 @@
 #include "EnergyLevel.h"
 
-EnergyLevel::EnergyLevel(uint64_t energyEV, Spin spin, double halfLifeSecs)
-    : e(energyEV), sp(spin), hlSecs(halfLifeSecs)
-{
-}
-
-EnergyLevel::EnergyLevel(const EnergyLevel &el)
-    : e(el.e), sp(el.sp), hlSecs(el.hlSecs)
+EnergyLevel::EnergyLevel(uint64_t energyEV, SpinParity spin, HalfLife halfLife, unsigned int isomerNum)
+    : e(energyEV), sp(spin), hl(halfLife), isonum(isomerNum), feedintens(std::numeric_limits<double>::quiet_NaN()),
+      gragroup(0), graline(0), grafeedarrow(0), graarrowhead(0), graetext(0), graspintext(0), grahltext(0),
+      grafeedintens(0)
 {
 }
 
@@ -15,14 +12,24 @@ uint64_t EnergyLevel::energyEv() const
     return e;
 }
 
-EnergyLevel::Spin EnergyLevel::spin() const
+SpinParity EnergyLevel::spin() const
 {
     return sp;
 }
 
-double EnergyLevel::halfLifeSecs() const
+HalfLife EnergyLevel::halfLife() const
 {
-    return hlSecs;
+    return hl;
+}
+
+unsigned int EnergyLevel::isomerNum() const
+{
+    return isonum;
+}
+
+double EnergyLevel::normalizedFeedIntensity() const
+{
+    return feedintens;
 }
 
 QString EnergyLevel::energyAsText() const

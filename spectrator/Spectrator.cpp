@@ -13,13 +13,15 @@ Spectrator::Spectrator(QWidget *parent) :
     ui->aListWidget->addItems(ENSDF::aValues());
     if (ui->aListWidget->count()) {
         // initialize selection
-        ui->aListWidget->setCurrentRow(110);
-        selectedA(ui->aListWidget->item(110)->text());
+        ui->aListWidget->setCurrentRow(168);
+        selectedA(ui->aListWidget->item(168)->text());
     }
 
     connect(ui->aListWidget, SIGNAL(currentTextChanged(QString)), this, SLOT(selectedA(QString)));
     connect(ui->nuclideListWidget, SIGNAL(currentTextChanged(QString)), this, SLOT(selectedNuclide(QString)));
     connect(ui->decayListWidget, SIGNAL(currentItemChanged(QListWidgetItem*,QListWidgetItem*)), this, SLOT(selectedDecay(QListWidgetItem*,QListWidgetItem*)));
+
+    ui->decayView->setRenderHints(QPainter::Antialiasing | QPainter::TextAntialiasing);
 }
 
 Spectrator::~Spectrator()
@@ -63,5 +65,7 @@ void Spectrator::selectedDecay(QListWidgetItem* newitem, QListWidgetItem*)
         return;
 
     QSharedPointer<Decay> decay = newitem->data(Qt::UserRole).value< QSharedPointer<Decay> >();
-    ui->decayView->setScene(decay->levelPlot());
+    QGraphicsScene *scene = decay->levelPlot();
+    ui->decayView->setScene(scene);
+    ui->decayView->setSceneRect(scene->sceneRect().adjusted(-20, -20, 20, 20));
 }

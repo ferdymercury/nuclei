@@ -15,12 +15,16 @@ SOURCES += main.cpp\
     ENSDF.cpp \
     Decay.cpp \
     EnergyLevel.cpp \
-    Nuclide.cpp
+    Nuclide.cpp \
+    HalfLife.cpp \
+    SpinParity.cpp
 
 HEADERS  += Spectrator.h \
     ENSDF.h \
     Decay.h \
     EnergyLevel.h \
-    Nuclide.h
+    Nuclide.h \
+    HalfLife.h \
+    SpinParity.h
 
 FORMS    += Spectrator.ui

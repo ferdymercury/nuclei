@@ -4,31 +4,27 @@
 #include <stdint.h>
 #include <limits>
 #include <QString>
+#include "HalfLife.h"
+#include "SpinParity.h"
 
 class QGraphicsItemGroup;
 class QGraphicsLineItem;
-class QGraphicsTextItem;
+class QGraphicsSimpleTextItem;
+class QGraphicsPolygonItem;
 
 class EnergyLevel
 {
 public:
-    struct Spin {
-        Spin() : numerator(0), denominator(1), sign(Undefined) {}
-        unsigned int numerator;
-        unsigned int denominator;
-        enum Sign {
-            Plus,
-            Minus,
-            Undefined
-        } sign;
-    };
-
-    EnergyLevel(uint64_t energyEV, Spin spin, double halfLifeSecs = std::numeric_limits<double>::infinity());
-    EnergyLevel(const EnergyLevel &el);
+    EnergyLevel(uint64_t energyEV, SpinParity spin,
+                HalfLife halfLife = HalfLife(std::numeric_limits<double>::infinity()),
+                unsigned int isomerNum = 0
+                );
 
     uint64_t energyEv() const;
-    Spin spin() const;
-    double halfLifeSecs() const;
+    SpinParity spin() const;
+    HalfLife halfLife() const;
+    unsigned int isomerNum() const;
+    double normalizedFeedIntensity() const;
 
     QString energyAsText() const;
 
@@ -36,12 +32,15 @@ public:
 
 private:
     uint64_t e;
-    Spin sp;
-    double hlSecs;
+    SpinParity sp;
+    HalfLife hl;
+    unsigned int isonum; // >0 for isomeric levels (counted from low energy to high), 0 otherwise
+    double feedintens; // says how often this level is directly fed per 100 parent decays
 
     QGraphicsItemGroup *gragroup;
-    QGraphicsLineItem *graline;
-    QGraphicsTextItem *gratext;
+    QGraphicsLineItem *graline, *grafeedarrow;
+    QGraphicsPolygonItem *graarrowhead;
+    QGraphicsSimpleTextItem *graetext, *graspintext, *grahltext, *grafeedintens;
 };
 
 #endif // ENERGYLEVEL_H
