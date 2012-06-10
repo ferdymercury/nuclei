@@ -6,9 +6,10 @@
 #include <QStringList>
 #include <QMap>
 #include "Nuclide.h"
-#include "EnergyLevel.h"
+#include "SpinParity.h"
 
 class QGraphicsScene;
+class EnergyLevel;
 
 class Decay : public QObject
 {
@@ -42,13 +43,14 @@ private:
     Nuclide pNuc, dNuc;
     Type t;
 
-    uint64_t parentDecayStartEnergyEv;
+    int64_t parentDecayStartEnergyEv;
     SpinParity parentDecayStartSpin;
     mutable double normalizeDecIntensToPercentParentDecay;
+    mutable double normalizeGammaIntensToPercentParentDecay;
 
 
     QStringList ensdf;
-    mutable QMap<unsigned int, EnergyLevel*> levels;
+    mutable QMap<int64_t, EnergyLevel*> levels;
     QGraphicsScene *scene;
 
     static const double outerGammaMargin; // margin between level texts (spin, energy) and gammas
@@ -58,6 +60,7 @@ private:
     static const double parentNuclideLevelLineLength;
     static const double parentNuclideLevelLineExtraLength; // additional length of the decaying level
     static const double arrowHeadLength;
+    static const double arrowHeadWidth;
     static const double arrowGap;
     static const double parentNuclideToEnergyLevelsDistance;
 };

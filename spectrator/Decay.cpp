@@ -5,7 +5,8 @@
 #include <QGraphicsLineItem>
 #include <QFontMetrics>
 #include <cmath>
-
+#include "EnergyLevel.h"
+#include "GammaTransition.h"
 
 const double Decay::outerGammaMargin = 50.0;
 const double Decay::outerLevelTextMargin = 4.0; // level lines extend beyond the beginning/end of the level texts by this value
@@ -13,14 +14,17 @@ const double Decay::maxExtraLevelDistance = 120.0;
 const double Decay::levelToHalfLifeDistance = 10.0;
 const double Decay::parentNuclideLevelLineLength = 110.0;
 const double Decay::parentNuclideLevelLineExtraLength = 15.5;
-const double Decay::arrowHeadLength = 10.0;
+const double Decay::arrowHeadLength = 11.0;
+const double Decay::arrowHeadWidth = 5.0;
 const double Decay::arrowGap = 5.0;
 const double Decay::parentNuclideToEnergyLevelsDistance = 30.0;
 
 
 Decay::Decay(Nuclide parentNuclide, Nuclide daughterNuclide, Type decayType, QObject *parent)
     : QObject(parent), pNuc(parentNuclide), dNuc(daughterNuclide), t(decayType),
-      parentDecayStartEnergyEv(0), normalizeDecIntensToPercentParentDecay(1.0)
+      parentDecayStartEnergyEv(0),
+      normalizeDecIntensToPercentParentDecay(1.0),
+      normalizeGammaIntensToPercentParentDecay(1.0)
 {
 }
 
@@ -29,7 +33,9 @@ Decay::Decay(Nuclide parentNuclide, Nuclide daughterNuclide, Type decayType, QOb
  */
 Decay::Decay(const QStringList &ensdfData, QObject *parent)
     : QObject(parent),
-      parentDecayStartEnergyEv(0), normalizeDecIntensToPercentParentDecay(1.0),
+      parentDecayStartEnergyEv(0),
+      normalizeDecIntensToPercentParentDecay(1.0),
+      normalizeGammaIntensToPercentParentDecay(1.0),
       ensdf(ensdfData), scene(0)
 {
     Q_ASSERT(!ensdf.isEmpty());
@@ -62,7 +68,7 @@ Decay::Decay(const QStringList &ensdfData, QObject *parent)
 
         // determine decaying level
         QLocale clocale("C");
-        parentDecayStartEnergyEv = uint64_t(clocale.toDouble(prec.mid(9, 10).trimmed())*1000.+0.5);
+        parentDecayStartEnergyEv = int64_t(clocale.toDouble(prec.mid(9, 10).trimmed())*1000.+0.5);
 
         // determine parent level's spin
         parentDecayStartSpin = SpinParity(prec.mid(21, 17));
@@ -116,9 +122,6 @@ QGraphicsScene * Decay::levelPlot()
         else if (t == BetaMinus)
             parentpos = LeftParent;
 
-        // determine space needed for gammas
-        double gammaspace = 300.0;
-
         // prepare fonts and their metrics
         QFont stdFont;
         QFont stdBoldFont;
@@ -133,6 +136,7 @@ QGraphicsScene * Decay::levelPlot()
         parentHlFont.setPointSizeF(parentHlFont.pointSizeF() * 1.3);
         QFont feedIntensityFont;
         feedIntensityFont.setItalic(true);
+        QFont gammaFont;
 
         QFontMetrics stdFontMetrics(stdFont);
         QFontMetrics stdBoldFontMetrics(stdBoldFont);
@@ -149,6 +153,17 @@ QGraphicsScene * Decay::levelPlot()
         QPen feedArrowPen;
         feedArrowPen.setWidthF(1.0);
         feedArrowPen.setCapStyle(Qt::SquareCap);
+        QPen intenseFeedArrowPen;
+        intenseFeedArrowPen.setWidthF(2.0);
+        intenseFeedArrowPen.setColor(QColor(232, 95, 92));
+        intenseFeedArrowPen.setCapStyle(Qt::SquareCap);
+        QPen gammaPen;
+        gammaPen.setWidthF(1.0);
+        gammaPen.setCapStyle(Qt::FlatCap);
+        QPen intenseGammaPen;
+        intenseGammaPen.setWidthF(2.0);
+        intenseGammaPen.setColor(QColor(232, 95, 92));
+        intenseGammaPen.setCapStyle(Qt::FlatCap);
 
         // create level items and determine max label widths
         double maxEnergyLabelWidth = 0.0;
@@ -192,15 +207,16 @@ QGraphicsScene * Decay::levelPlot()
             if (std::isfinite(feedintensity)) {
                 // create line
                 level->grafeedarrow = new QGraphicsLineItem;
-                level->grafeedarrow->setPen(feedArrowPen);
+                level->grafeedarrow->setPen((level->feedintens >= 10.0) ? intenseFeedArrowPen : feedArrowPen);
                 scene->addItem(level->grafeedarrow);
                 // create arrow head
                 QPolygonF arrowpol;
                 arrowpol << QPointF(0.0, 0.0);
-                arrowpol << QPointF((parentpos == RightParent ? 1.0 : -1.0) * arrowHeadLength, 0.2*arrowHeadLength);
-                arrowpol << QPointF((parentpos == RightParent ? 1.0 : -1.0) * arrowHeadLength, -0.2*arrowHeadLength);
+                arrowpol << QPointF((parentpos == RightParent ? 1.0 : -1.0) * arrowHeadLength, 0.5*arrowHeadWidth);
+                arrowpol << QPointF((parentpos == RightParent ? 1.0 : -1.0) * arrowHeadLength, -0.5*arrowHeadWidth);
                 level->graarrowhead = new QGraphicsPolygonItem(arrowpol);
                 level->graarrowhead->setBrush(QColor(level->grafeedarrow->pen().color()));
+                level->graarrowhead->setPen(Qt::NoPen);
                 scene->addItem(level->graarrowhead);
                 // create intensity label
                 level->grafeedintens = new QGraphicsSimpleTextItem(QString("%1 %").arg(feedintensity));
@@ -210,23 +226,51 @@ QGraphicsScene * Decay::levelPlot()
         }
         // determine y coordinates for all levels
         double maxEnergyGap = 0.0;
-        QList<unsigned int> energies(levels.keys());
+        QList<int64_t> energies(levels.keys());
         for (int i=1; i<energies.size(); i++) {
             double diff = double(energies.at(i)) - double(energies.at(i-1));
             maxEnergyGap = qMax(maxEnergyGap, diff);
         }
-
-        QList<double> yPositions;
-        yPositions << 0.0;
         for (int i=1; i<energies.size(); i++) {
             double minheight = (levels.value(energies.at(i))->gragroup->boundingRect().height() + levels.value(energies.at(i-1))->gragroup->boundingRect().height())/2.0;
             double extraheight = maxExtraLevelDistance * (double(energies.at(i)) - double(energies.at(i-1))) / maxEnergyGap;
-            yPositions << qRound(yPositions.at(i-1) - minheight - extraheight);
+            levels[energies.at(i)]->graYPos = std::floor(levels[energies.at(i-1)]->graYPos - minheight - extraheight) + 0.5*levels[energies.at(i)]->graline->pen().widthF();
+        }
+
+        // create gammas and determine horizintal space needed
+        double gammaspace = std::numeric_limits<double>::quiet_NaN();
+        foreach (EnergyLevel *level, levels) {
+            QList<GammaTransition*> levelgammas = level->depopulatingTransitions();
+            foreach (GammaTransition *gamma, levelgammas) {
+                QGraphicsItem *item = gamma->createGammaGraphicsItem(gammaFont, gammaPen, intenseGammaPen);
+                scene->addItem(item);
+                if (std::isnan(gammaspace))
+                    gammaspace = gamma->widthFromOrigin();
+                else
+                    gammaspace += gamma->minimalXDistance();
+            }
         }
 
         // calculate length of level lines
-        double leftlinelength = outerLevelTextMargin + maxSpinLabelWidth + outerGammaMargin + gammaspace/2.0;
-        double rightlinelength = outerLevelTextMargin + maxEnergyLabelWidth + outerGammaMargin + gammaspace/2.0;
+        double leftlinelength = outerLevelTextMargin + maxSpinLabelWidth + outerGammaMargin + 0.5*gammaspace;
+        double rightlinelength = outerLevelTextMargin + maxEnergyLabelWidth + outerGammaMargin + 0.5*gammaspace;
+
+        // set gamma positions
+        double currentgammapos = 0.5*gammaspace;
+        bool firstgamma = true;
+        foreach (EnergyLevel *level, levels) {
+            QList<GammaTransition*> levelgammas = level->depopulatingTransitions();
+            foreach (GammaTransition *gamma, levelgammas) {
+                if (firstgamma) {
+                    currentgammapos -= gamma->widthFromOrigin();
+                    firstgamma = false;
+                }
+                else {
+                    currentgammapos -= gamma->minimalXDistance();
+                }
+                gamma->gammaGraphicsItem()->moveBy(std::floor(currentgammapos)+0.5*gamma->pen().widthF(), level->graYPos + 0.5*level->graline->pen().widthF());
+            }
+        }
 
         // create parent nuclide label and level(s)
         //   initialize pNucLineLength to make it updateable
@@ -282,8 +326,7 @@ QGraphicsScene * Decay::levelPlot()
 
         // set level item positions and sizes
         double arrowVEnd = std::numeric_limits<double>::quiet_NaN();
-        for (int i=0; i<energies.size(); i++) {
-            EnergyLevel *level = levels.value(energies.at(i));
+        foreach (EnergyLevel *level, levels) {
             level->graline->setLine(-leftlinelength, 0.0, rightlinelength, 0.0);
             level->graspintext->setPos(-leftlinelength + outerLevelTextMargin, -stdBoldFontMetrics.height());
             level->graetext->setPos(rightlinelength - outerLevelTextMargin - stdBoldFontMetrics.width(level->graetext->text()), -stdBoldFontMetrics.height());
@@ -295,11 +338,11 @@ QGraphicsScene * Decay::levelPlot()
                 levelHlPos = rightlinelength + levelToHalfLifeDistance;
             }
             level->grahltext->setPos(levelHlPos, -0.5*stdBoldFontMetrics.height());
-            level->gragroup->moveBy(0.0, yPositions.at(i) + 0.5*level->graline->pen().widthF()); // add 0.5*pen-width to avoid antialiasing artifacts
+            level->gragroup->moveBy(0.0, level->graYPos); // add 0.5*pen-width to avoid antialiasing artifacts
             if (level->grafeedarrow) {
                 double leftend = (parentpos == RightParent) ? rightlinelength + arrowGap + arrowHeadLength : -leftlinelength - pNucLineLength - parentNuclideLevelLineExtraLength;
                 double rightend = (parentpos == RightParent) ? rightlinelength + pNucLineLength + parentNuclideLevelLineExtraLength : -leftlinelength - arrowGap - arrowHeadLength;
-                double arrowY = yPositions.at(i) + 0.5*level->grafeedarrow->pen().widthF();
+                double arrowY = level->graYPos;
                 level->grafeedarrow->setLine(leftend, arrowY, rightend, arrowY);
                 level->graarrowhead->setPos((parentpos == RightParent) ? rightlinelength + arrowGap : -leftlinelength - arrowGap, arrowY);
                 if (std::isnan(arrowVEnd))
@@ -392,14 +435,41 @@ void Decay::processENSDFLevels() const
     EnergyLevel *currentLevel = 0;
     QLocale clocale("C");
     bool convok;
+
     foreach (const QString &line, ensdf) {
 
-        // process new level
-        if (line.startsWith(dNuc.nucid() + "  L ")) {
+        // process new gamma
+        if (!levels.isEmpty() && line.startsWith(dNuc.nucid() + "  G ")) {
             // determine energy
             QString estr(line.mid(9, 10));
             estr.remove('(').remove(')');
-            uint64_t e = uint64_t(clocale.toDouble(estr.trimmed())*1000.+0.5);
+            int64_t e = int64_t(clocale.toDouble(estr.trimmed())*1000.+0.5);
+
+            // determine intensity
+            QString instr(line.mid(21,7));
+            instr.remove('(').remove(')');
+            double in = clocale.toDouble(instr, &convok);
+            if (!convok)
+                in = std::numeric_limits<double>::quiet_NaN();
+            else
+                in *= normalizeGammaIntensToPercentParentDecay;
+
+            EnergyLevel *start = currentLevel;
+            int64_t destenergy = start->energyEv() - e;
+            QMap<int64_t, EnergyLevel*>::iterator iDest = levels.lowerBound(destenergy);
+            EnergyLevel *dest = iDest.value();
+            if (iDest != levels.begin()) {
+                if (qAbs(destenergy - (iDest-1).key()) < qAbs(destenergy - iDest.key()))
+                    dest = (iDest-1).value();
+            }
+            new GammaTransition(e, in, start, dest); // gamma registers itself with the start and dest levels
+        }
+        // process new level
+        else if (line.startsWith(dNuc.nucid() + "  L ")) {
+            // determine energy
+            QString estr(line.mid(9, 10));
+            estr.remove('(').remove(')');
+            int64_t e = int64_t(clocale.toDouble(estr.trimmed())*1000.+0.5);
             // determine spin
             SpinParity spin(line.mid(21, 17));
             // determine isomer number
@@ -440,12 +510,20 @@ void Decay::processENSDFLevels() const
             double br = clocale.toDouble(brstr.trimmed(), &convok);
             if (!convok)
                 br = 1.0;
+
             QString nbstr(line.mid(41, 7));
             nbstr.remove('(').remove(')');
             double nb = clocale.toDouble(nbstr.trimmed(), &convok);
             if (!convok)
                 nb = 1.0;
             normalizeDecIntensToPercentParentDecay = nb * br;
+
+            QString nrstr(line.mid(9, 10));
+            nrstr.remove('(').remove(')');
+            double nr = clocale.toDouble(nrstr.trimmed(), &convok);
+            if (!convok)
+                nr = 1.0;
+            normalizeGammaIntensToPercentParentDecay = nr * br;
         }
         else if (line.startsWith(dNuc.nucid() + " PN ")) {
             QString nbbrstr(line.mid(41, 7));
@@ -453,6 +531,12 @@ void Decay::processENSDFLevels() const
             double nbbr = clocale.toDouble(nbbrstr.trimmed(), &convok);
             if (convok)
                 normalizeDecIntensToPercentParentDecay = nbbr;
+
+            QString nrbrstr(line.mid(9, 10));
+            nrbrstr.remove('(').remove(')');
+            double nrbr = clocale.toDouble(nrbrstr.trimmed(), &convok);
+            if (convok)
+                normalizeGammaIntensToPercentParentDecay = nrbr;
         }
     }
 }
