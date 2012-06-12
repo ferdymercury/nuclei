@@ -8,6 +8,8 @@
 
 const QColor ActiveGraphicsItemGroup::shadowColor(178, 223, 150, 180);
 const double ActiveGraphicsItemGroup::animationDuration = 100.0;
+const bool ActiveGraphicsItemGroup::animateShadow = false;
+const bool ActiveGraphicsItemGroup::animate = false;
 
 ActiveGraphicsItemGroup::ActiveGraphicsItemGroup(QGraphicsItem * parent)
     : QGraphicsItemGroup(parent), shadow(new GraphicsDropShadowEffect), m_shape(0), m_helper(0),
@@ -17,22 +19,28 @@ ActiveGraphicsItemGroup::ActiveGraphicsItemGroup(QGraphicsItem * parent)
     shadow->setBlurRadius(15.0);
     shadow->setOffset(QPointF(0.0, 0.0));
     shadow->setColor(shadowColor);
-    shadow->setOpacity(0.0);
 
     setGraphicsEffect(shadow);
     setAcceptHoverEvents(true);
 
-    aniHighlight = new QPropertyAnimation(m_helper, "opacity");
-    aniHighlight->setDuration(animationDuration);
-    aniHighlight->setStartValue(0.0);
-    aniHighlight->setEndValue(1.0);
-    aniShadow = new QPropertyAnimation(shadow, "opacity");
-    aniShadow->setDuration(animationDuration);
-    aniShadow->setStartValue(0.0);
-    aniShadow->setEndValue(1.0);
-    aniGroup = new QParallelAnimationGroup;
-    aniGroup->addAnimation(aniHighlight);
-    aniGroup->addAnimation(aniShadow);
+    if (animate) {
+        shadow->setOpacity(0.0);
+        aniHighlight = new QPropertyAnimation(m_helper, "opacity");
+        aniHighlight->setDuration(animationDuration);
+        aniHighlight->setStartValue(0.0);
+        aniHighlight->setEndValue(1.0);
+        aniShadow = new QPropertyAnimation(shadow, "opacity");
+        aniShadow->setDuration(animationDuration);
+        aniShadow->setStartValue(0.0);
+        aniShadow->setEndValue(1.0);
+        aniGroup = new QParallelAnimationGroup;
+        aniGroup->addAnimation(aniHighlight);
+        if (aniShadow)
+            aniGroup->addAnimation(aniShadow);
+    }
+    else {
+        shadow->setEnabled(false);
+    }
 }
 
 ActiveGraphicsItemGroup::~ActiveGraphicsItemGroup()
@@ -52,7 +60,13 @@ void ActiveGraphicsItemGroup::addHighlightHelper(GraphicsHighlightItem *helperit
 {
     delete m_helper;
     m_helper = helperitem;
-    m_helper->setOpacity(0.0);
+    if (animate) {
+        m_helper->setOpacity(0.0);
+    }
+    else {
+        m_helper->setOpacity(1.0);
+        m_helper->hide();
+    }
     m_helper->setPen(Qt::NoPen);
     m_helper->setBrush(QBrush(shadowColor));
     addToGroup(m_helper);
@@ -94,20 +108,38 @@ QPainterPath ActiveGraphicsItemGroup::shape() const
 
 void ActiveGraphicsItemGroup::hoverEnterEvent(QGraphicsSceneHoverEvent *event)
 {
-    aniGroup->stop();
     setZValue(1.0);
-    if (m_helper && !aniHighlight->targetObject())
-        aniHighlight->setTargetObject(m_helper);
-    aniGroup->setDirection(QAbstractAnimation::Forward);
-    aniGroup->start();
+    if (animate) {
+        aniGroup->stop();
+        if (m_helper && !aniHighlight->targetObject())
+            aniHighlight->setTargetObject(m_helper);
+        aniGroup->setDirection(QAbstractAnimation::Forward);
+        aniGroup->start();
+        if (!aniShadow)
+            shadow->setOpacity(1.0);
+    }
+    else {
+        m_helper->show();
+        shadow->setEnabled(true);
+    }
+
 }
 
 void ActiveGraphicsItemGroup::hoverLeaveEvent(QGraphicsSceneHoverEvent *event)
 {
-    aniGroup->stop();
-    setZValue(1.0);
-    if (m_helper && !aniHighlight->targetObject())
-        aniHighlight->setTargetObject(m_helper);
-    aniGroup->setDirection(QAbstractAnimation::Backward);
-    aniGroup->start();
+    setZValue(0.0);
+    if (animate) {
+        aniGroup->stop();
+        if (m_helper && !aniHighlight->targetObject())
+            aniHighlight->setTargetObject(m_helper);
+        aniGroup->setDirection(QAbstractAnimation::Backward);
+        aniGroup->start();
+        if (!aniShadow)
+            shadow->setOpacity(0.0);
+    }
+    else {
+        m_helper->hide();
+        shadow->setEnabled(false);
+    }
+
 }

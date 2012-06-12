@@ -35,6 +35,8 @@ private:
 
     static const QColor shadowColor;
     static const double animationDuration;
+    static const bool animateShadow;
+    static const bool animate;
 };
 
 #endif // ACTIVEGRAPHICSITEMGROUP_H
