@@ -10,6 +10,7 @@
 #include "ActiveGraphicsItemGroup.h"
 #include "EnergyLevel.h"
 #include "GammaTransition.h"
+#include "GraphicsHighlightItem.h"
 
 const double Decay::outerGammaMargin = 50.0;
 const double Decay::outerLevelTextMargin = 4.0; // level lines extend beyond the beginning/end of the level texts by this value
@@ -21,6 +22,7 @@ const double Decay::arrowHeadLength = 11.0;
 const double Decay::arrowHeadWidth = 5.0;
 const double Decay::arrowGap = 5.0;
 const double Decay::parentNuclideToEnergyLevelsDistance = 30.0;
+const double Decay::highlightWidth = 5.0;
 
 
 Decay::Decay(Nuclide parentNuclide, Nuclide daughterNuclide, Type decayType, QObject *parent)
@@ -144,6 +146,9 @@ QGraphicsScene * Decay::levelPlot()
             level->graclickarea->setPen(Qt::NoPen);
             level->graclickarea->setBrush(Qt::NoBrush);
 
+            level->grahighlighthelper = new GraphicsHighlightItem(-outerGammaMargin, -0.5*highlightWidth, 2.0*outerGammaMargin, highlightWidth);
+            level->grahighlighthelper->setOpacity(0.0);
+
             QString etext = level->energyAsText();
             level->graetext = new QGraphicsSimpleTextItem(etext, level->gragroup);
             level->graetext->setFont(stdBoldFont);
@@ -159,6 +164,7 @@ QGraphicsScene * Decay::levelPlot()
             level->grahltext->setFont(stdFont);
             level->grahltext->setPos(0.0, -0.5*stdBoldFontMetrics.height());
 
+            level->gragroup->addHighlightHelper(level->grahighlighthelper);
             level->gragroup->addToGroup(level->graline);
             level->gragroup->addToGroup(level->graclickarea);
             level->gragroup->addToGroup(level->graetext);
@@ -347,11 +353,12 @@ void Decay::alignGraphicsItems()
     double leftlinelength = outerLevelTextMargin + maxSpinLabelWidth + outerGammaMargin + 0.5*gammaspace;
     double rightlinelength = outerLevelTextMargin + maxEnergyLabelWidth + outerGammaMargin + 0.5*gammaspace;
 
-    // set level item positions and sizes
+    // set level positions and sizes
     double arrowVEnd = std::numeric_limits<double>::quiet_NaN();
     foreach (EnergyLevel *level, levels) {
         level->graline->setLine(-leftlinelength, 0.0, rightlinelength, 0.0);
         level->graclickarea->setRect(-leftlinelength, -0.5*stdBoldFontMetrics.height(), leftlinelength+rightlinelength, stdBoldFontMetrics.height());
+        level->grahighlighthelper->setRect(-leftlinelength, -0.5*highlightWidth, leftlinelength+rightlinelength, highlightWidth);
         level->graspintext->setPos(-leftlinelength + outerLevelTextMargin, -stdBoldFontMetrics.height());
         level->graetext->setPos(rightlinelength - outerLevelTextMargin - stdBoldFontMetrics.width(level->graetext->text()), -stdBoldFontMetrics.height());
         double levelHlPos = 0.0;

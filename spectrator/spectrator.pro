@@ -19,7 +19,9 @@ SOURCES += main.cpp\
     HalfLife.cpp \
     SpinParity.cpp \
     GammaTransition.cpp \
-    ActiveGraphicsItemGroup.cpp
+    ActiveGraphicsItemGroup.cpp \
+    GraphicsHighlightItem.cpp \
+    GraphicsDropShadowEffect.cpp
 
 HEADERS  += Spectrator.h \
     ENSDF.h \
@@ -29,6 +31,8 @@ HEADERS  += Spectrator.h \
     HalfLife.h \
     SpinParity.h \
     GammaTransition.h \
-    ActiveGraphicsItemGroup.h
+    ActiveGraphicsItemGroup.h \
+    GraphicsHighlightItem.h \
+    GraphicsDropShadowEffect.h
 
 FORMS    += Spectrator.ui

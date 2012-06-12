@@ -7,19 +7,21 @@
 #include <cmath>
 #include "ActiveGraphicsItemGroup.h"
 #include "EnergyLevel.h"
+#include "GraphicsHighlightItem.h"
 
 const double GammaTransition::textAngle = -60.0;
 const double GammaTransition::arrowHeadLength = 11.0;
 const double GammaTransition::arrowBaseLength = 7.0;
 const double GammaTransition::arrowHeadWidth = 5.0;
 const double GammaTransition::arrowBaseWidth = 5.0;
+const double GammaTransition::highlightWidth = 5.0;
 const QPolygonF GammaTransition::arrowHeadShape = initArrowHead();
 const QPolygonF GammaTransition::arrowBaseShape = initArrowBase();
 
 
 GammaTransition::GammaTransition(int64_t energyEV, double intensity, EnergyLevel *start, EnergyLevel *dest)
     : e(energyEV), intens(intensity), m_start(start), m_dest(dest),
-      item(0), arrow(0), text(0), arrowhead(0), arrowbase(0), clickarea(0), mindist(0.0)
+      item(0), arrow(0), text(0), arrowhead(0), arrowbase(0), clickarea(0), highlightHelper(0), mindist(0.0)
 {
     start->m_depopulatingTransitions.append(this);
     dest->m_populatingTransitions.append(this);
@@ -74,13 +76,16 @@ QGraphicsItem *GammaTransition::createGammaGraphicsItem(const QFont &gammaFont, 
     clickarea->setPen(Qt::NoPen);
     clickarea->setBrush(Qt::NoBrush);
 
-    updateArrow();
+    highlightHelper = new GraphicsHighlightItem(-0.5*highlightWidth, 0.0, highlightWidth, 0.0);
 
+    item->addHighlightHelper(highlightHelper);
     item->addToGroup(arrowbase);
     item->addToGroup(text);
     item->addToGroup(arrow);
     item->addToGroup(arrowhead);
     item->addToGroup(clickarea);
+
+    updateArrow();
 
     return item;
 }
@@ -94,12 +99,17 @@ void GammaTransition::updateArrow()
 {
     item->removeFromGroup(clickarea);
     item->removeFromGroup(arrowhead);
+    item->removeFromGroup(arrowbase);
     item->removeFromGroup(arrow);
+    item->removeHighlightHelper(highlightHelper);
     double arrowDestY = m_dest->graYPos - m_start->graYPos;
     arrowhead->setPos(0.0, arrowDestY);
     arrow->setLine(0.0, 0.0, 0.0, arrowDestY - arrowHeadLength);
     clickarea->setRect(-0.5*mindist, 0.0, mindist, arrowDestY);
+    highlightHelper->setRect(-0.5*highlightWidth, 0.0, highlightWidth, arrowDestY - arrowHeadLength);
+    item->addHighlightHelper(highlightHelper);
     item->addToGroup(arrow);
+    item->addToGroup(arrowbase);
     item->addToGroup(arrowhead);
     item->addToGroup(clickarea);
 }

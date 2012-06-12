@@ -78,6 +78,7 @@ private:
     static const double arrowHeadWidth;
     static const double arrowGap;
     static const double parentNuclideToEnergyLevelsDistance;
+    static const double highlightWidth;
 };
 
 #endif // DECAY_H

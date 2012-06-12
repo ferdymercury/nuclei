@@ -4,7 +4,7 @@
 EnergyLevel::EnergyLevel(int64_t energyEV, SpinParity spin, HalfLife halfLife, unsigned int isomerNum)
     : e(energyEV), sp(spin), hl(halfLife), isonum(isomerNum), feedintens(std::numeric_limits<double>::quiet_NaN()),
       gragroup(0), graline(0), grafeedarrow(0), graarrowhead(0), graetext(0), graspintext(0), grahltext(0),
-      grafeedintens(0), graclickarea(0), graYPos(0.0)
+      grafeedintens(0), graclickarea(0), grahighlighthelper(0), graYPos(0.0)
 {
 }
 

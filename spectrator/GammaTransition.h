@@ -11,6 +11,7 @@ class QGraphicsLineItem;
 class QGraphicsTextItem;
 class QGraphicsPolygonItem;
 class QGraphicsRectItem;
+class GraphicsHighlightItem;
 class EnergyLevel;
 
 class GammaTransition
@@ -41,6 +42,7 @@ private:
     QGraphicsTextItem *text;
     QGraphicsPolygonItem *arrowhead, *arrowbase;
     QGraphicsRectItem *clickarea;
+    GraphicsHighlightItem *highlightHelper;
     double mindist;
     QPen m_pen;
 
@@ -49,6 +51,7 @@ private:
     static const double arrowBaseLength;
     static const double arrowHeadWidth;
     static const double arrowBaseWidth;
+    static const double highlightWidth;
 
     static const QPolygonF arrowHeadShape, arrowBaseShape;
     static QPolygonF initArrowHead();

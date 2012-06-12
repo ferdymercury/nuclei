@@ -13,6 +13,7 @@ class ActiveGraphicsItemGroup;
 class QGraphicsLineItem;
 class QGraphicsSimpleTextItem;
 class QGraphicsPolygonItem;
+class GraphicsHighlightItem;
 class GammaTransition;
 
 class EnergyLevel
@@ -55,6 +56,7 @@ private:
     QGraphicsPolygonItem *graarrowhead;
     QGraphicsSimpleTextItem *graetext, *graspintext, *grahltext, *grafeedintens;
     QGraphicsRectItem *graclickarea;
+    GraphicsHighlightItem *grahighlighthelper;
     double graYPos;
 };
 
