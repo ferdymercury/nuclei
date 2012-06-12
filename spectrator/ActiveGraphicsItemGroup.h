@@ -10,7 +10,8 @@ class ActiveGraphicsItemGroup : public QGraphicsItemGroup
 public:
     ActiveGraphicsItemGroup(QGraphicsItem *parent = 0);
     ~ActiveGraphicsItemGroup();
-    void moveBy(qreal dx, qreal dy);
+    void setPos(const QPointF & pos);
+    virtual QPainterPath shape() const;
 
 protected:
     virtual void hoverEnterEvent(QGraphicsSceneHoverEvent * event);
@@ -18,6 +19,7 @@ protected:
 
 private:
     QGraphicsDropShadowEffect *shadow;
+    mutable QPainterPath *m_shape;
 };
 
 #endif // ACTIVEGRAPHICSITEMGROUP_H
