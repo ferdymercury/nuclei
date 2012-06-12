@@ -10,7 +10,9 @@ class ActiveGraphicsItemGroup : public QGraphicsItemGroup
 public:
     ActiveGraphicsItemGroup(QGraphicsItem *parent = 0);
     ~ActiveGraphicsItemGroup();
+    void addToGroup(QGraphicsItem * item);
     void setPos(const QPointF & pos);
+    void setPos(qreal x, qreal y);
     virtual QPainterPath shape() const;
 
 protected:

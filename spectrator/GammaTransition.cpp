@@ -19,7 +19,7 @@ const QPolygonF GammaTransition::arrowBaseShape = initArrowBase();
 
 GammaTransition::GammaTransition(int64_t energyEV, double intensity, EnergyLevel *start, EnergyLevel *dest)
     : e(energyEV), intens(intensity), m_start(start), m_dest(dest),
-      item(0), arrow(0), text(0), arrowhead(0), arrowbase(0), mindist(0.0)
+      item(0), arrow(0), text(0), arrowhead(0), arrowbase(0), clickarea(0), mindist(0.0)
 {
     start->m_depopulatingTransitions.append(this);
     dest->m_populatingTransitions.append(this);
@@ -40,14 +40,11 @@ QGraphicsItem *GammaTransition::createGammaGraphicsItem(const QFont &gammaFont, 
         m_pen = intenseGammaPen;
 
     // group origin is set to the start level!
-    double arrowDestY = m_dest->graYPos - m_start->graYPos;
-
     item = new ActiveGraphicsItemGroup;
 
     arrowhead = new QGraphicsPolygonItem(arrowHeadShape);
     arrowhead->setBrush(QBrush(m_pen.color()));
     arrowhead->setPen(Qt::NoPen);
-    arrowhead->setPos(0.0, arrowDestY);
 
     arrowbase = new QGraphicsPolygonItem(arrowBaseShape);
     arrowbase->setBrush(QBrush(m_pen.color()));
@@ -56,7 +53,6 @@ QGraphicsItem *GammaTransition::createGammaGraphicsItem(const QFont &gammaFont, 
 
     arrow = new QGraphicsLineItem;
     arrow->setPen(m_pen);
-    arrow->setLine(0.0, 0.0, 0.0, arrowDestY - arrowHeadLength);
 
     QString intensstr;
     if (!std::isnan(intens))
@@ -74,10 +70,17 @@ QGraphicsItem *GammaTransition::createGammaGraphicsItem(const QFont &gammaFont, 
     mindist = std::abs(textheight / std::sin(-textAngle/180.0*M_PI));
     text->moveBy(0.5*textheight*std::sin(-textAngle/180.0*M_PI) - 0.5*mindist, 0.0);
 
-    item->addToGroup(arrowhead);
+    clickarea = new QGraphicsRectItem(-0.5*mindist, 0.0, mindist, 0.0);
+    clickarea->setPen(Qt::NoPen);
+    clickarea->setBrush(Qt::NoBrush);
+
+    updateArrow();
+
     item->addToGroup(arrowbase);
-    item->addToGroup(arrow);
     item->addToGroup(text);
+    item->addToGroup(arrow);
+    item->addToGroup(arrowhead);
+    item->addToGroup(clickarea);
 
     return item;
 }
@@ -85,6 +88,20 @@ QGraphicsItem *GammaTransition::createGammaGraphicsItem(const QFont &gammaFont, 
 QGraphicsItem * GammaTransition::gammaGraphicsItem() const
 {
     return item;
+}
+
+void GammaTransition::updateArrow()
+{
+    item->removeFromGroup(clickarea);
+    item->removeFromGroup(arrowhead);
+    item->removeFromGroup(arrow);
+    double arrowDestY = m_dest->graYPos - m_start->graYPos;
+    arrowhead->setPos(0.0, arrowDestY);
+    arrow->setLine(0.0, 0.0, 0.0, arrowDestY - arrowHeadLength);
+    clickarea->setRect(-0.5*mindist, 0.0, mindist, arrowDestY);
+    item->addToGroup(arrow);
+    item->addToGroup(arrowhead);
+    item->addToGroup(clickarea);
 }
 
 double GammaTransition::minimalXDistance() const

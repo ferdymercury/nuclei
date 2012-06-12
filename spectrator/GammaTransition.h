@@ -10,6 +10,7 @@ class ActiveGraphicsItemGroup;
 class QGraphicsLineItem;
 class QGraphicsTextItem;
 class QGraphicsPolygonItem;
+class QGraphicsRectItem;
 class EnergyLevel;
 
 class GammaTransition
@@ -21,6 +22,7 @@ public:
 
     QGraphicsItem * createGammaGraphicsItem(const QFont &gammaFont, const QPen &gammaPen, const QPen &intenseGammaPen);
     QGraphicsItem * gammaGraphicsItem() const;
+    void updateArrow();
     double minimalXDistance() const;
     /**
      * Distance between origin and right edge of the bounding rect
@@ -38,6 +40,7 @@ private:
     QGraphicsLineItem *arrow;
     QGraphicsTextItem *text;
     QGraphicsPolygonItem *arrowhead, *arrowbase;
+    QGraphicsRectItem *clickarea;
     double mindist;
     QPen m_pen;
 

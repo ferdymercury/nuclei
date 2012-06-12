@@ -3,6 +3,7 @@
 #include <QLocale>
 #include <QGraphicsScene>
 #include <QGraphicsLineItem>
+#include <QGraphicsRectItem>
 #include <QGraphicsDropShadowEffect>
 #include <QFontMetrics>
 #include <cmath>
@@ -26,7 +27,8 @@ Decay::Decay(Nuclide parentNuclide, Nuclide daughterNuclide, Type decayType, QOb
     : QObject(parent), pNuc(parentNuclide), dNuc(daughterNuclide), t(decayType),
       parentDecayStartEnergyEv(0),
       normalizeDecIntensToPercentParentDecay(1.0),
-      normalizeGammaIntensToPercentParentDecay(1.0)
+      normalizeGammaIntensToPercentParentDecay(1.0),
+      pNucBaseLevel(0), pNucStartLevel(0), pNucVerticalArrow(0), pNucHl(0), pNucBaseEnergy(0), pNucEnergy(0), pNucSpin(0)
 {
 }
 
@@ -107,6 +109,8 @@ QString Decay::decayTypeAsText() const
 
 QGraphicsScene * Decay::levelPlot()
 {
+    initializeStyle();
+
     if (!scene) {
         processENSDFLevels();
 
@@ -124,53 +128,10 @@ QGraphicsScene * Decay::levelPlot()
         else if (t == BetaMinus)
             parentpos = LeftParent;
 
-        // prepare fonts and their metrics
-        QFont stdFont;
-        QFont stdBoldFont;
-        stdBoldFont.setBold(true);
-        QFont nucFont;
-        nucFont.setPointSizeF(nucFont.pointSizeF() * 2.5);
-        nucFont.setBold(true);
-        QFont nucIndexFont;
-        nucIndexFont.setPointSizeF(nucIndexFont.pointSizeF() * 1.5);
-        nucIndexFont.setBold(true);
-        QFont parentHlFont;
-        parentHlFont.setPointSizeF(parentHlFont.pointSizeF() * 1.3);
-        QFont feedIntensityFont;
-        feedIntensityFont.setItalic(true);
-        QFont gammaFont;
-
-        QFontMetrics stdFontMetrics(stdFont);
-        QFontMetrics stdBoldFontMetrics(stdBoldFont);
-        QFontMetrics parentHlFontMetrics(parentHlFont);
-        QFontMetrics feedIntensityFontMetrics(feedIntensityFont);
-
-        // prepare pens
-        QPen levelPen;
-        levelPen.setWidthF(1.0);
-        levelPen.setCapStyle(Qt::FlatCap);
-        QPen stableLevelPen;
-        stableLevelPen.setWidthF(2.0);
-        stableLevelPen.setCapStyle(Qt::FlatCap);
-        QPen feedArrowPen;
-        feedArrowPen.setWidthF(1.0);
-        feedArrowPen.setCapStyle(Qt::SquareCap);
-        QPen intenseFeedArrowPen;
-        intenseFeedArrowPen.setWidthF(2.0);
-        intenseFeedArrowPen.setColor(QColor(232, 95, 92));
-        intenseFeedArrowPen.setCapStyle(Qt::SquareCap);
-        QPen gammaPen;
-        gammaPen.setWidthF(1.0);
-        gammaPen.setCapStyle(Qt::FlatCap);
-        QPen intenseGammaPen;
-        intenseGammaPen.setWidthF(2.0);
-        intenseGammaPen.setColor(QColor(232, 95, 92));
-        intenseGammaPen.setCapStyle(Qt::FlatCap);
-
         // create level items and determine max label widths
-        double maxEnergyLabelWidth = 0.0;
-        double maxSpinLabelWidth = 0.0;
         foreach (EnergyLevel *level, levels) {
+            QFontMetrics stdBoldFontMetrics(stdBoldFont);
+
             level->gragroup = new ActiveGraphicsItemGroup;
 
             level->graline = new QGraphicsLineItem(-outerGammaMargin, 0.0, outerGammaMargin, 0.0, level->gragroup);
@@ -179,18 +140,18 @@ QGraphicsScene * Decay::levelPlot()
             if (level->halfLife().isStable() || level->isomerNum() > 0)
                 level->graline->setPen(stableLevelPen);
 
+            level->graclickarea = new QGraphicsRectItem(-outerGammaMargin, -0.5*stdBoldFontMetrics.height(), 2.0*outerGammaMargin, stdBoldFontMetrics.height());
+            level->graclickarea->setPen(Qt::NoPen);
+            level->graclickarea->setBrush(Qt::NoBrush);
+
             QString etext = level->energyAsText();
             level->graetext = new QGraphicsSimpleTextItem(etext, level->gragroup);
             level->graetext->setFont(stdBoldFont);
-            if (stdBoldFontMetrics.width(etext) > maxEnergyLabelWidth)
-                maxEnergyLabelWidth = stdBoldFontMetrics.width(etext);
             level->graetext->setPos(0.0, -stdBoldFontMetrics.height());
 
             QString spintext = level->spin().toString();
             level->graspintext = new QGraphicsSimpleTextItem(spintext, level->gragroup);
             level->graspintext->setFont(stdBoldFont);
-            if (stdBoldFontMetrics.width(spintext) > maxSpinLabelWidth)
-                maxSpinLabelWidth = stdBoldFontMetrics.width(spintext);
             level->graspintext->setPos(0.0, -stdBoldFontMetrics.height());
 
             QString hltext = level->halfLife().toString();
@@ -199,6 +160,7 @@ QGraphicsScene * Decay::levelPlot()
             level->grahltext->setPos(0.0, -0.5*stdBoldFontMetrics.height());
 
             level->gragroup->addToGroup(level->graline);
+            level->gragroup->addToGroup(level->graclickarea);
             level->gragroup->addToGroup(level->graetext);
             level->gragroup->addToGroup(level->graspintext);
             level->gragroup->addToGroup(level->grahltext);
@@ -226,67 +188,23 @@ QGraphicsScene * Decay::levelPlot()
                 scene->addItem(level->grafeedintens);
             }
         }
-        // determine y coordinates for all levels
-        double maxEnergyGap = 0.0;
-        QList<int64_t> energies(levels.keys());
-        for (int i=1; i<energies.size(); i++) {
-            double diff = double(energies.at(i)) - double(energies.at(i-1));
-            maxEnergyGap = qMax(maxEnergyGap, diff);
-        }
-        for (int i=1; i<energies.size(); i++) {
-            double minheight = (levels.value(energies.at(i))->gragroup->boundingRect().height() + levels.value(energies.at(i-1))->gragroup->boundingRect().height())/2.0;
-            double extraheight = maxExtraLevelDistance * (double(energies.at(i)) - double(energies.at(i-1))) / maxEnergyGap;
-            levels[energies.at(i)]->graYPos = std::floor(levels[energies.at(i-1)]->graYPos - minheight - extraheight) + 0.5*levels[energies.at(i)]->graline->pen().widthF();
-        }
 
-        // create gammas and determine horizintal space needed
-        double gammaspace = std::numeric_limits<double>::quiet_NaN();
+        // create gammas
         foreach (EnergyLevel *level, levels) {
             QList<GammaTransition*> levelgammas = level->depopulatingTransitions();
             foreach (GammaTransition *gamma, levelgammas) {
                 QGraphicsItem *item = gamma->createGammaGraphicsItem(gammaFont, gammaPen, intenseGammaPen);
                 scene->addItem(item);
-                if (std::isnan(gammaspace))
-                    gammaspace = gamma->widthFromOrigin();
-                else
-                    gammaspace += gamma->minimalXDistance();
-            }
-        }
-
-        // calculate length of level lines
-        double leftlinelength = outerLevelTextMargin + maxSpinLabelWidth + outerGammaMargin + 0.5*gammaspace;
-        double rightlinelength = outerLevelTextMargin + maxEnergyLabelWidth + outerGammaMargin + 0.5*gammaspace;
-
-        // set gamma positions
-        double currentgammapos = 0.5*gammaspace;
-        bool firstgamma = true;
-        foreach (EnergyLevel *level, levels) {
-            QList<GammaTransition*> levelgammas = level->depopulatingTransitions();
-            foreach (GammaTransition *gamma, levelgammas) {
-                if (firstgamma) {
-                    currentgammapos -= gamma->widthFromOrigin();
-                    firstgamma = false;
-                }
-                else {
-                    currentgammapos -= gamma->minimalXDistance();
-                }
-                gamma->gammaGraphicsItem()->moveBy(std::floor(currentgammapos)+0.5*gamma->pen().widthF(), level->graYPos + 0.5*level->graline->pen().widthF());
             }
         }
 
         // create parent nuclide label and level(s)
         //   initialize pNucLineLength to make it updateable
-        double pNucLineLength = parentNuclideLevelLineLength;
         //   create graphics items
-        QGraphicsItem *pNucGra = 0;
-        QGraphicsLineItem *pNucBaseLevel = 0, *pNucStartLevel = 0;
-        QGraphicsLineItem *pNucVerticalArrow = 0;
-        QGraphicsSimpleTextItem *pNucHl = 0, *pNucBaseEnergy = 0, *pNucEnergy = 0, *pNucSpin = 0;
         if (parentpos == LeftParent || parentpos == RightParent) {
             // create nuclide label
-            pNucGra = pNuc.nuclideGraphicsItem(nucFont, nucIndexFont);
+            QGraphicsItem *pNucGra = pNuc.createNuclideGraphicsItem(nucFont, nucIndexFont);
             scene->addItem(pNucGra);
-            pNucLineLength = qMax(pNucLineLength, pNucGra->boundingRect().width() + 20.0);
 
             // create half-life label
             pNucHl = new QGraphicsSimpleTextItem(pNuc.halfLife().toString());
@@ -326,96 +244,13 @@ QGraphicsScene * Decay::levelPlot()
             }
         }
 
-        // set level item positions and sizes
-        double arrowVEnd = std::numeric_limits<double>::quiet_NaN();
-        foreach (EnergyLevel *level, levels) {
-            level->graline->setLine(-leftlinelength, 0.0, rightlinelength, 0.0);
-            level->graspintext->setPos(-leftlinelength + outerLevelTextMargin, -stdBoldFontMetrics.height());
-            level->graetext->setPos(rightlinelength - outerLevelTextMargin - stdBoldFontMetrics.width(level->graetext->text()), -stdBoldFontMetrics.height());
-            double levelHlPos = 0.0;
-            if (parentpos == RightParent) {
-                levelHlPos = -leftlinelength - levelToHalfLifeDistance - stdFontMetrics.width(level->grahltext->text());
-            }
-            else {
-                levelHlPos = rightlinelength + levelToHalfLifeDistance;
-            }
-            level->grahltext->setPos(levelHlPos, -0.5*stdBoldFontMetrics.height());
-
-            level->gragroup->moveBy(0.0, level->graYPos); // add 0.5*pen-width to avoid antialiasing artifacts
-
-            if (level->grafeedarrow) {
-                double leftend = (parentpos == RightParent) ? rightlinelength + arrowGap + arrowHeadLength : -leftlinelength - pNucLineLength - parentNuclideLevelLineExtraLength;
-                double rightend = (parentpos == RightParent) ? rightlinelength + pNucLineLength + parentNuclideLevelLineExtraLength : -leftlinelength - arrowGap - arrowHeadLength;
-                double arrowY = level->graYPos;
-                level->grafeedarrow->setLine(leftend, arrowY, rightend, arrowY);
-                level->graarrowhead->setPos((parentpos == RightParent) ? rightlinelength + arrowGap : -leftlinelength - arrowGap, arrowY);
-                if (std::isnan(arrowVEnd))
-                    arrowVEnd = arrowY;
-                level->grafeedintens->setPos(leftend + 15.0, arrowY - feedIntensityFontMetrics.height());
-            }
-        }
-
-        // set position of parent nuclide
-        if (parentpos == LeftParent || parentpos == RightParent) {
-            double parentY = levels.value(energies.last())->gragroup->y() -
-                    levels.value(energies.last())->gragroup->boundingRect().height() -
-                    pNucGra->boundingRect().height() - parentNuclideToEnergyLevelsDistance;
-
-            double parentcenter;
-            if (parentpos == RightParent)
-                parentcenter = rightlinelength + 0.5*(pNucLineLength+parentNuclideLevelLineExtraLength);
-            else
-                parentcenter = -leftlinelength - 0.5*(pNucLineLength+parentNuclideLevelLineExtraLength);
-
-            pNucGra->setPos(parentcenter - 0.5*pNucGra->boundingRect().width(), parentY);
-
-            // set position of parent levels
-            double normalleft = (parentpos == RightParent) ? rightlinelength : -leftlinelength - pNucLineLength;
-            double normalright = (parentpos == RightParent) ? rightlinelength + pNucLineLength : -leftlinelength;
-            double activeleft = (parentpos == RightParent) ? normalleft : normalleft - parentNuclideLevelLineExtraLength;
-            double activeright = (parentpos == RightParent) ? normalright + parentNuclideLevelLineExtraLength : normalright;
-
-            double baseleft = 0.0;
-            double baseright = 0.0;
-            double startleft = 0.0;
-            double startright = 0.0;
-
-            double y = qRound(parentY - 0.3*pNucGra->boundingRect().height()) + 0.5*pNucBaseLevel->pen().widthF();
-
-            double arrowX = (parentpos == RightParent) ? activeright : activeleft;
-            double arrowVStart = y;
-
-            double topMostLevel = y;
-
-            if (parentDecayStartEnergyEv) {
-                baseleft = normalleft;
-                baseright = normalright;
-                startleft = activeleft;
-                startright = activeright;
-                double startlevelY = y-pNucBaseEnergy->boundingRect().height() - 10.0;
-                arrowVStart = startlevelY;
-                topMostLevel = startlevelY;
-                pNucStartLevel->setLine(startleft, startlevelY, startright, startlevelY);
-                pNucEnergy->setPos(startright - stdBoldFontMetrics.width(pNucEnergy->text()), startlevelY - stdBoldFontMetrics.height());
-            }
-            else {
-                baseleft = activeleft;
-                baseright = activeright;
-            }
-            if (std::isfinite(arrowVEnd))
-                pNucVerticalArrow->setLine(arrowX, arrowVStart, arrowX, arrowVEnd);
-            pNucBaseLevel->setLine(baseleft, y, baseright, y);
-            pNucBaseEnergy->setPos(baseright - stdBoldFontMetrics.width(pNucBaseEnergy->text()), y - stdBoldFontMetrics.height());
-            pNucSpin->setPos(activeleft, topMostLevel - stdBoldFontMetrics.height());
-            pNucHl->setPos(parentcenter - 0.5*pNucHl->boundingRect().width(), topMostLevel - stdBoldFontMetrics.height() - parentHlFontMetrics.height() - 12.0);
-        }
-
         // create daughter nuclide label
-        QGraphicsItem *dNucGra = dNuc.nuclideGraphicsItem(nucFont, nucIndexFont);
+        QGraphicsItem *dNucGra = dNuc.createNuclideGraphicsItem(nucFont, nucIndexFont);
         scene->addItem(dNucGra);
-        dNucGra->setPos(-0.5*dNucGra->boundingRect().width(), 0.3*dNucGra->boundingRect().height());
 
+        alignGraphicsItems();
     }
+
     return scene;
 }
 
@@ -428,6 +263,206 @@ QString Decay::toText() const
     if (!pNuc.halfLife().isStable())
         result.append(", " + pNuc.halfLife().toString());
     return result;
+}
+
+void Decay::alignGraphicsItems()
+{
+    // decide if parent nuclide should be printed on the left side (beta-),
+    // on the right side (EC, beta+, alpha) or not at all (isomeric)
+    enum ParentPosition {
+        NoParent,
+        LeftParent,
+        RightParent
+    } parentpos = RightParent;
+    if (t == IsomericTransition)
+        parentpos = NoParent;
+    else if (t == BetaMinus)
+        parentpos = LeftParent;
+
+    QFontMetrics stdFontMetrics(stdFont);
+    QFontMetrics stdBoldFontMetrics(stdBoldFont);
+    QFontMetrics parentHlFontMetrics(parentHlFont);
+    QFontMetrics feedIntensityFontMetrics(feedIntensityFont);
+
+    // determine size information
+    double maxEnergyLabelWidth = 0.0;
+    double maxSpinLabelWidth = 0.0;
+
+    foreach (EnergyLevel *level, levels) {
+        if (stdBoldFontMetrics.width(level->graspintext->text()) > maxSpinLabelWidth)
+            maxSpinLabelWidth = stdBoldFontMetrics.width(level->graspintext->text());
+        if (stdBoldFontMetrics.width(level->graetext->text()) > maxEnergyLabelWidth)
+            maxEnergyLabelWidth = stdBoldFontMetrics.width(level->graetext->text());
+    }
+
+    // determine y coordinates for all levels
+    double maxEnergyGap = 0.0;
+    for (QMap<int64_t, EnergyLevel*>::const_iterator i=levels.begin()+1; i!=levels.end(); i++) {
+        double diff = double(i.key()) - double((i-1).key());
+        maxEnergyGap = qMax(maxEnergyGap, diff);
+    }
+    for (QMap<int64_t, EnergyLevel*>::const_iterator i=levels.begin()+1; i!=levels.end(); i++) {
+        double minheight = 0.5*(i.value()->gragroup->boundingRect().height() + (i-1).value()->gragroup->boundingRect().height());
+        double extraheight = maxExtraLevelDistance * (double(i.key()) - double((i-1).key())) / maxEnergyGap;
+        i.value()->graYPos = std::floor((i-1).value()->graYPos - minheight - extraheight) + 0.5*i.value()->graline->pen().widthF();
+    }
+
+    // determine space needed for gammas
+    double gammaspace = std::numeric_limits<double>::quiet_NaN();
+    foreach (EnergyLevel *level, levels) {
+        QList<GammaTransition*> levelgammas = level->depopulatingTransitions();
+        foreach (GammaTransition *gamma, levelgammas) {
+            if (std::isnan(gammaspace))
+                gammaspace = gamma->widthFromOrigin();
+            else
+                gammaspace += gamma->minimalXDistance();
+        }
+    }
+
+    // set gamma positions
+    double currentgammapos = 0.5*gammaspace;
+    bool firstgamma = true;
+    foreach (EnergyLevel *level, levels) {
+        QList<GammaTransition*> levelgammas = level->depopulatingTransitions();
+        foreach (GammaTransition *gamma, levelgammas) {
+            if (firstgamma) {
+                currentgammapos -= gamma->widthFromOrigin();
+                firstgamma = false;
+            }
+            else {
+                currentgammapos -= gamma->minimalXDistance();
+            }
+            gamma->updateArrow();
+            gamma->gammaGraphicsItem()->setPos(std::floor(currentgammapos)+0.5*gamma->pen().widthF(), level->graYPos + 0.5*level->graline->pen().widthF());
+        }
+    }
+
+    // determine line length for parent levels
+    double pNucLineLength = parentNuclideLevelLineLength;
+    if (parentpos == LeftParent || parentpos == RightParent) {
+        pNucLineLength = qMax(parentNuclideLevelLineLength, pNuc.nuclideGraphicsItem()->boundingRect().width() + 20.0);
+    }
+
+    // calculate length of level lines
+    double leftlinelength = outerLevelTextMargin + maxSpinLabelWidth + outerGammaMargin + 0.5*gammaspace;
+    double rightlinelength = outerLevelTextMargin + maxEnergyLabelWidth + outerGammaMargin + 0.5*gammaspace;
+
+    // set level item positions and sizes
+    double arrowVEnd = std::numeric_limits<double>::quiet_NaN();
+    foreach (EnergyLevel *level, levels) {
+        level->graline->setLine(-leftlinelength, 0.0, rightlinelength, 0.0);
+        level->graclickarea->setRect(-leftlinelength, -0.5*stdBoldFontMetrics.height(), leftlinelength+rightlinelength, stdBoldFontMetrics.height());
+        level->graspintext->setPos(-leftlinelength + outerLevelTextMargin, -stdBoldFontMetrics.height());
+        level->graetext->setPos(rightlinelength - outerLevelTextMargin - stdBoldFontMetrics.width(level->graetext->text()), -stdBoldFontMetrics.height());
+        double levelHlPos = 0.0;
+        if (parentpos == RightParent) {
+            levelHlPos = -leftlinelength - levelToHalfLifeDistance - stdFontMetrics.width(level->grahltext->text());
+        }
+        else {
+            levelHlPos = rightlinelength + levelToHalfLifeDistance;
+        }
+        level->grahltext->setPos(levelHlPos, -0.5*stdBoldFontMetrics.height());
+
+        level->gragroup->setPos(0.0, level->graYPos); // add 0.5*pen-width to avoid antialiasing artifacts
+
+        if (level->grafeedarrow) {
+            double leftend = (parentpos == RightParent) ? rightlinelength + arrowGap + arrowHeadLength : -leftlinelength - pNucLineLength - parentNuclideLevelLineExtraLength;
+            double rightend = (parentpos == RightParent) ? rightlinelength + pNucLineLength + parentNuclideLevelLineExtraLength : -leftlinelength - arrowGap - arrowHeadLength;
+            double arrowY = level->graYPos;
+            level->grafeedarrow->setLine(leftend, arrowY, rightend, arrowY);
+            level->graarrowhead->setPos((parentpos == RightParent) ? rightlinelength + arrowGap : -leftlinelength - arrowGap, arrowY);
+            if (std::isnan(arrowVEnd))
+                arrowVEnd = arrowY;
+            level->grafeedintens->setPos(leftend + 15.0, arrowY - feedIntensityFontMetrics.height());
+        }
+    }
+
+    // set position of daughter nuclide
+    dNuc.nuclideGraphicsItem()->setPos(-0.5*dNuc.nuclideGraphicsItem()->boundingRect().width(), 0.3*dNuc.nuclideGraphicsItem()->boundingRect().height());
+
+    // set position of parent nuclide
+    if (parentpos == LeftParent || parentpos == RightParent) {
+        int64_t maxEnergy = (levels.end()-1).key();
+        double parentY = levels.value(maxEnergy)->gragroup->y() -
+                levels.value(maxEnergy)->gragroup->boundingRect().height() -
+                pNuc.nuclideGraphicsItem()->boundingRect().height() - parentNuclideToEnergyLevelsDistance;
+
+        double parentcenter;
+        if (parentpos == RightParent)
+            parentcenter = rightlinelength + 0.5*(pNucLineLength+parentNuclideLevelLineExtraLength);
+        else
+            parentcenter = -leftlinelength - 0.5*(pNucLineLength+parentNuclideLevelLineExtraLength);
+
+        pNuc.nuclideGraphicsItem()->setPos(parentcenter - 0.5*pNuc.nuclideGraphicsItem()->boundingRect().width(), parentY);
+
+        // set position of parent levels
+        double normalleft = (parentpos == RightParent) ? rightlinelength : -leftlinelength - pNucLineLength;
+        double normalright = (parentpos == RightParent) ? rightlinelength + pNucLineLength : -leftlinelength;
+        double activeleft = (parentpos == RightParent) ? normalleft : normalleft - parentNuclideLevelLineExtraLength;
+        double activeright = (parentpos == RightParent) ? normalright + parentNuclideLevelLineExtraLength : normalright;
+
+        double baseleft = 0.0;
+        double baseright = 0.0;
+        double startleft = 0.0;
+        double startright = 0.0;
+
+        double y = qRound(parentY - 0.3*pNuc.nuclideGraphicsItem()->boundingRect().height()) + 0.5*pNucBaseLevel->pen().widthF();
+
+        double arrowX = (parentpos == RightParent) ? activeright : activeleft;
+        double arrowVStart = y;
+
+        double topMostLevel = y;
+
+        if (parentDecayStartEnergyEv) {
+            baseleft = normalleft;
+            baseright = normalright;
+            startleft = activeleft;
+            startright = activeright;
+            double startlevelY = y-pNucBaseEnergy->boundingRect().height() - 10.0;
+            arrowVStart = startlevelY;
+            topMostLevel = startlevelY;
+            pNucStartLevel->setLine(startleft, startlevelY, startright, startlevelY);
+            pNucEnergy->setPos(startright - stdBoldFontMetrics.width(pNucEnergy->text()), startlevelY - stdBoldFontMetrics.height());
+        }
+        else {
+            baseleft = activeleft;
+            baseright = activeright;
+        }
+        if (std::isfinite(arrowVEnd))
+            pNucVerticalArrow->setLine(arrowX, arrowVStart, arrowX, arrowVEnd);
+        pNucBaseLevel->setLine(baseleft, y, baseright, y);
+        pNucBaseEnergy->setPos(baseright - stdBoldFontMetrics.width(pNucBaseEnergy->text()), y - stdBoldFontMetrics.height());
+        pNucSpin->setPos(activeleft, topMostLevel - stdBoldFontMetrics.height());
+        pNucHl->setPos(parentcenter - 0.5*pNucHl->boundingRect().width(), topMostLevel - stdBoldFontMetrics.height() - parentHlFontMetrics.height() - 12.0);
+    }
+}
+
+void Decay::initializeStyle()
+{
+    // prepare fonts and their metrics
+    stdBoldFont.setBold(true);
+    nucFont.setPointSizeF(nucFont.pointSizeF() * 2.5);
+    nucFont.setBold(true);
+    nucIndexFont.setPointSizeF(nucIndexFont.pointSizeF() * 1.5);
+    nucIndexFont.setBold(true);
+    parentHlFont.setPointSizeF(parentHlFont.pointSizeF() * 1.3);
+    feedIntensityFont.setItalic(true);
+
+    // prepare pens
+    levelPen.setWidthF(1.0);
+    levelPen.setCapStyle(Qt::FlatCap);
+    stableLevelPen.setWidthF(2.0);
+    stableLevelPen.setCapStyle(Qt::FlatCap);
+    feedArrowPen.setWidthF(1.0);
+    feedArrowPen.setCapStyle(Qt::SquareCap);
+    intenseFeedArrowPen.setWidthF(2.0);
+    intenseFeedArrowPen.setColor(QColor(232, 95, 92));
+    intenseFeedArrowPen.setCapStyle(Qt::SquareCap);
+    gammaPen.setWidthF(1.0);
+    gammaPen.setCapStyle(Qt::FlatCap);
+    intenseGammaPen.setWidthF(2.0);
+    intenseGammaPen.setColor(QColor(232, 95, 92));
+    intenseGammaPen.setCapStyle(Qt::FlatCap);
 }
 
 void Decay::processENSDFLevels() const

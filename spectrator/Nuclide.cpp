@@ -5,12 +5,12 @@
 #include <QBrush>
 
 Nuclide::Nuclide()
-    : hl(HalfLife(std::numeric_limits<double>::infinity()))
+    : hl(HalfLife(std::numeric_limits<double>::infinity())), item(0)
 {
 }
 
 Nuclide::Nuclide(unsigned int A, const QString &element, HalfLife halfLife)
-    : m_A(A), hl(halfLife)
+    : m_A(A), hl(halfLife), item(0)
 {
     el = element.toLower();
     if (!el.isEmpty())
@@ -51,24 +51,24 @@ QString Nuclide::nucid() const
     return QString("%1%2").arg(m_A, 3, 10, QChar(' ')).arg(el.leftJustified(2, ' ').toUpper());
 }
 
-QGraphicsItem *Nuclide::nuclideGraphicsItem(const QFont &nucFont, const QFont &nucIndexFont)
+QGraphicsItem *Nuclide::createNuclideGraphicsItem(const QFont &nucFont, const QFont &nucIndexFont)
 {
     static const double numberToNameDistance = 4.0;
 
     QFontMetrics nucFontMetrics(nucFont);
     QFontMetrics nucIndexFontMetrics(nucIndexFont);
 
-    QGraphicsItemGroup *gragroup = new QGraphicsItemGroup;
+    item = new QGraphicsItemGroup;
 
-    QGraphicsSimpleTextItem *granuc = new QGraphicsSimpleTextItem(element(), gragroup);
+    QGraphicsSimpleTextItem *granuc = new QGraphicsSimpleTextItem(element(), item);
     granuc->setFont(nucFont);
     granuc->setBrush(QBrush(QColor(64, 166, 255)));
 
-    QGraphicsSimpleTextItem *graA = new QGraphicsSimpleTextItem(QString::number(a()), gragroup);
+    QGraphicsSimpleTextItem *graA = new QGraphicsSimpleTextItem(QString::number(a()), item);
     graA->setFont(nucIndexFont);
     graA->setBrush(QBrush(QColor(64, 166, 255)));
 
-    QGraphicsSimpleTextItem *graZ = new QGraphicsSimpleTextItem(QString::number(z()), gragroup);
+    QGraphicsSimpleTextItem *graZ = new QGraphicsSimpleTextItem(QString::number(z()), item);
     graZ->setFont(nucIndexFont);
     graZ->setBrush(QBrush(QColor(64, 166, 255)));
 
@@ -80,11 +80,16 @@ QGraphicsItem *Nuclide::nuclideGraphicsItem(const QFont &nucFont, const QFont &n
 
     // added in the end to work around a bug in QGraphicsItemGroup:
     //   it does not update boundingRect if contents are moved after adding them
-    gragroup->addToGroup(granuc);
-    gragroup->addToGroup(graA);
-    gragroup->addToGroup(graZ);
+    item->addToGroup(granuc);
+    item->addToGroup(graA);
+    item->addToGroup(graZ);
 
-    return gragroup;
+    return item;
+}
+
+QGraphicsItem *Nuclide::nuclideGraphicsItem() const
+{
+    return item;
 }
 
 const QMap<QString, unsigned int> Nuclide::elToZ = initElToZ();

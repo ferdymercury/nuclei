@@ -5,11 +5,15 @@
 #include <QObject>
 #include <QStringList>
 #include <QMap>
+#include <QFont>
+#include <QPen>
 #include "Nuclide.h"
 #include "SpinParity.h"
 
 class QGraphicsScene;
 class EnergyLevel;
+class QGraphicsLineItem;
+class QGraphicsSimpleTextItem;
 
 class Decay : public QObject
 {
@@ -38,6 +42,8 @@ signals:
 public slots:
 
 private:
+    void alignGraphicsItems();
+    void initializeStyle();
     void processENSDFLevels() const;
 
     Nuclide pNuc, dNuc;
@@ -52,6 +58,15 @@ private:
     QStringList ensdf;
     mutable QMap<int64_t, EnergyLevel*> levels;
     QGraphicsScene *scene;
+
+    // graphics items
+    QGraphicsLineItem *pNucBaseLevel, *pNucStartLevel;
+    QGraphicsLineItem *pNucVerticalArrow;
+    QGraphicsSimpleTextItem *pNucHl, *pNucBaseEnergy, *pNucEnergy, *pNucSpin;
+
+    // style
+    QFont stdFont, stdBoldFont, nucFont, nucIndexFont, parentHlFont, feedIntensityFont, gammaFont;
+    QPen levelPen, stableLevelPen, feedArrowPen, intenseFeedArrowPen, gammaPen, intenseGammaPen;
 
     static const double outerGammaMargin; // margin between level texts (spin, energy) and gammas
     static const double outerLevelTextMargin; // level lines extend beyond the beginning/end of the level texts by this value

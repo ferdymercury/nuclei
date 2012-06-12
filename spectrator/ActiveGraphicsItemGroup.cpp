@@ -20,6 +20,14 @@ ActiveGraphicsItemGroup::~ActiveGraphicsItemGroup()
     delete m_shape;
 }
 
+void ActiveGraphicsItemGroup::addToGroup(QGraphicsItem *item)
+{
+    delete m_shape;
+    m_shape = 0;
+    QGraphicsItemGroup::addToGroup(item);
+}
+
+
 void ActiveGraphicsItemGroup::setPos(const QPointF &pos)
 {
     QGraphicsItemGroup::setPos(pos);
@@ -29,6 +37,11 @@ void ActiveGraphicsItemGroup::setPos(const QPointF &pos)
     addToGroup(tmp);
     delete m_shape;
     m_shape = 0;
+}
+
+void ActiveGraphicsItemGroup::setPos(qreal x, qreal y)
+{
+    setPos(QPointF(x, y));
 }
 
 QPainterPath ActiveGraphicsItemGroup::shape() const
@@ -44,10 +57,12 @@ QPainterPath ActiveGraphicsItemGroup::shape() const
 
 void ActiveGraphicsItemGroup::hoverEnterEvent(QGraphicsSceneHoverEvent *event)
 {
+    setZValue(1.0);
     shadow->setEnabled(true);
 }
 
 void ActiveGraphicsItemGroup::hoverLeaveEvent(QGraphicsSceneHoverEvent *event)
 {
+    setZValue(0.0);
     shadow->setEnabled(false);
 }

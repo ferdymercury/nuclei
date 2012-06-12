@@ -8,6 +8,7 @@
 #include "HalfLife.h"
 
 class QGraphicsItem;
+class QGraphicsItemGroup;
 
 class Nuclide
 {
@@ -22,7 +23,8 @@ public:
     QString name() const;
     QString nucid() const;
 
-    QGraphicsItem * nuclideGraphicsItem(const QFont &nucFont, const QFont &nucIndexFont);
+    QGraphicsItem * createNuclideGraphicsItem(const QFont &nucFont, const QFont &nucIndexFont);
+    QGraphicsItem * nuclideGraphicsItem() const;
 
 private:
     unsigned int m_A;
@@ -31,6 +33,8 @@ private:
 
     static const QMap<QString, unsigned int> elToZ;
     static QMap<QString, unsigned int> initElToZ();
+
+    QGraphicsItemGroup * item;
 };
 
 #endif // NUCLIDE_H

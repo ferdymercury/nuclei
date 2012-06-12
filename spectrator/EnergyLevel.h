@@ -54,6 +54,7 @@ private:
     QGraphicsLineItem *graline, *grafeedarrow;
     QGraphicsPolygonItem *graarrowhead;
     QGraphicsSimpleTextItem *graetext, *graspintext, *grahltext, *grafeedintens;
+    QGraphicsRectItem *graclickarea;
     double graYPos;
 };
 
