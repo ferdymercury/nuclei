@@ -6,6 +6,7 @@
 #include <QGraphicsRectItem>
 #include <QGraphicsDropShadowEffect>
 #include <QFontMetrics>
+#include <QVector>
 #include <cmath>
 #include "EnergyLevel.h"
 #include "ActiveGraphicsItemGroup.h"
@@ -81,7 +82,7 @@ Decay::Decay(const QStringList &ensdfData, QObject *parent)
         parentDecayStartEnergyEv = int64_t(clocale.toDouble(prec.mid(9, 10).trimmed())*1000.+0.5);
 
         // determine parent level's spin
-        parentDecayStartSpin = SpinParity(prec.mid(21, 17));
+        parentDecayStartSpin = SpinParity(prec.mid(21, 18));
     }
     // create parent nuclide
     Nuclide p(head.mid(9, 3).trimmed().toUInt(), head.mid(12, 2).trimmed(), hl);
@@ -283,6 +284,36 @@ QString Decay::toText() const
     return result;
 }
 
+QVector<QPointF> Decay::gammaSpectrum(double fwhm) const
+{
+    // collect gammas
+    QMap<int64_t, double> gammas;
+    foreach (EnergyLevel *level, levels)
+        foreach (GammaTransition *g, level->depopulatingTransitions())
+            gammas.insert(g->energyEv(), g->intensity());
+
+    // determine highest energy
+    double max = 0.0;
+    if (!gammas.isEmpty())
+        max = (gammas.end()-1).key();
+
+    // determine sigma
+    double sigma = fwhm / (2.0*sqrt(2.0*M_LN2));
+
+    // create result vector (on interval [0, max+2*fwhm])
+    QVector<QPointF> result(max/1000+1 + qRound(2.0*fwhm));
+
+    // compute values
+    for (int i=0; i<result.size(); i++) {
+        result[i].setX(double(i)+0.5);
+        for (QMap<int64_t, double>::const_iterator gamma=gammas.begin(); gamma!=gammas.end(); gamma++) {
+            result[i].ry() += gamma.value() * gauss(result[i].x() - double(gamma.key())/1000.0, sigma);
+        }
+    }
+
+    return result;
+}
+
 void Decay::itemClicked(ClickableItem *item)
 {
     if (item->type() == ClickableItem::EnergyLevelType)
@@ -455,16 +486,44 @@ void Decay::updateDecayDataLabels()
 
     // populating
     if (pop) {
-        ui->popEnergy->setText(QString("%1 keV").arg(double(pop->energyEv())/1000.0));
-        ui->popIntensity->setText(QString("%1 %").arg(pop->intensity()));
-        ui->popMultipolarity->setText("");
-        ui->popMixing->setText("");
+        ui->popEnergy->setText(pop->energyAsText());
+        ui->popIntensity->setText(pop->intensityAsText());
+        ui->popMultipolarity->setText(pop->multipolarityAsText());
+        ui->popMixing->setText(pop->deltaAsText());
     }
     else {
         ui->popEnergy->setText("- keV");
         ui->popIntensity->setText("- %");
         ui->popMultipolarity->setText("<i>unknown</i>");
-        ui->popMixing->setText("-");
+        ui->popMixing->setText("<i>unknown</i>");
+    }
+
+    // depopulating
+    if (depop) {
+        ui->depopEnergy->setText(depop->energyAsText());
+        ui->depopIntensity->setText(depop->intensityAsText());
+        ui->depopMultipolarity->setText(depop->multipolarityAsText());
+        ui->depopMixing->setText(depop->deltaAsText());
+    }
+    else {
+        ui->depopEnergy->setText("- keV");
+        ui->depopIntensity->setText("- %");
+        ui->depopMultipolarity->setText("<i>unknown</i>");
+        ui->depopMixing->setText("<i>unknown</i>");
+    }
+
+    // start and end level
+    if (firstSelectedGamma && secondSelectedGamma) {
+        ui->startEnergy->setText(pop->depopulatedLevel()->energyAsText());
+        ui->startSpin->setText(pop->depopulatedLevel()->spin().toString());
+        ui->endEnergy->setText(depop->populatedLevel()->energyAsText());
+        ui->endSpin->setText(depop->populatedLevel()->spin().toString());
+    }
+    else {
+        ui->startEnergy->setText("- keV");
+        ui->startSpin->setText("/");
+        ui->endEnergy->setText("- keV");
+        ui->endSpin->setText("/");
     }
 }
 
@@ -689,7 +748,7 @@ void Decay::processENSDFLevels() const
             int64_t e = int64_t(clocale.toDouble(estr.trimmed())*1000.+0.5);
 
             // determine intensity
-            QString instr(line.mid(21,7));
+            QString instr(line.mid(21,8));
             instr.remove('(').remove(')');
             double in = clocale.toDouble(instr, &convok);
             if (!convok)
@@ -697,6 +756,31 @@ void Decay::processENSDFLevels() const
             else
                 in *= normalizeGammaIntensToPercentParentDecay;
 
+            // determine multipolarity
+            QString mpol(line.mid(31, 10).trimmed());
+
+            // determine delta
+            QString deltastr(line.mid(41, 8).trimmed());
+            double delta = 0.0;
+            GammaTransition::DeltaState deltastate = GammaTransition::UnknownDelta;
+            if (deltastr.isEmpty()) {
+                if (mpol.count() == 2)
+                    deltastate = GammaTransition::SignMagnitudeDefined;
+                // else leave deltastate UnknownDelta
+            }
+            else {
+                double tmp = clocale.toDouble(deltastr, &convok);
+                if (convok) {
+                    delta = tmp;
+                    if (deltastr.contains('+') || deltastr.contains('-'))
+                        deltastate = GammaTransition::SignMagnitudeDefined;
+                    else
+                        deltastate = GammaTransition::MagnitudeDefined;
+                }
+                // else leave deltastate UnknownDelta
+            }
+
+            // determine levels
             EnergyLevel *start = currentLevel;
             int64_t destenergy = start->energyEv() - e;
             QMap<int64_t, EnergyLevel*>::iterator iDest = levels.lowerBound(destenergy);
@@ -705,7 +789,8 @@ void Decay::processENSDFLevels() const
                 if (qAbs(destenergy - (iDest-1).key()) < qAbs(destenergy - iDest.key()))
                     dest = (iDest-1).value();
             }
-            new GammaTransition(e, in, start, dest); // gamma registers itself with the start and dest levels
+            // gamma registers itself with the start and dest levels
+            new GammaTransition(e, in, mpol, delta, deltastate, start, dest);
         }
         // process new level
         else if (line.startsWith(dNuc.nucid() + "  L ")) {
@@ -714,7 +799,7 @@ void Decay::processENSDFLevels() const
             estr.remove('(').remove(')');
             int64_t e = int64_t(clocale.toDouble(estr.trimmed())*1000.+0.5);
             // determine spin
-            SpinParity spin(line.mid(21, 17));
+            SpinParity spin(line.mid(21, 18));
             // determine isomer number
             QString isostr(line.mid(77,2));
             unsigned int isonum = isostr.mid(1,1).toUInt(&convok);
@@ -726,21 +811,21 @@ void Decay::processENSDFLevels() const
         }
         // process decay information
         else if (!levels.isEmpty() && line.startsWith(dNuc.nucid() + "  E ")) {
-            QString iestr(line.mid(31, 7));
+            QString iestr(line.mid(31, 8));
             iestr.remove('(').remove(')');
             double ie = clocale.toDouble(iestr.trimmed(), &convok);
             if (convok)
                 currentLevel->feedintens = ie * normalizeDecIntensToPercentParentDecay;
         }
         else if (!levels.isEmpty() && line.startsWith(dNuc.nucid() + "  B ")) {
-            QString ibstr(line.mid(21, 7));
+            QString ibstr(line.mid(21, 8));
             ibstr.remove('(').remove(')');
             double ib = clocale.toDouble(ibstr.trimmed(), &convok);
             if (convok)
                 currentLevel->feedintens = ib * normalizeDecIntensToPercentParentDecay;
         }
         else if (!levels.isEmpty() && line.startsWith(dNuc.nucid() + "  A ")) {
-            QString iastr(line.mid(21, 7));
+            QString iastr(line.mid(21, 8));
             iastr.remove('(').remove(')');
             double ia = clocale.toDouble(iastr.trimmed(), &convok);
             if (convok)
@@ -748,13 +833,13 @@ void Decay::processENSDFLevels() const
         }
         // process normalization records
         else if (line.startsWith(dNuc.nucid() + "  N ")) {
-            QString brstr(line.mid(31, 7));
+            QString brstr(line.mid(31, 8));
             brstr.remove('(').remove(')');
             double br = clocale.toDouble(brstr.trimmed(), &convok);
             if (!convok)
                 br = 1.0;
 
-            QString nbstr(line.mid(41, 7));
+            QString nbstr(line.mid(41, 8));
             nbstr.remove('(').remove(')');
             double nb = clocale.toDouble(nbstr.trimmed(), &convok);
             if (!convok)
@@ -769,7 +854,7 @@ void Decay::processENSDFLevels() const
             normalizeGammaIntensToPercentParentDecay = nr * br;
         }
         else if (line.startsWith(dNuc.nucid() + " PN ")) {
-            QString nbbrstr(line.mid(41, 7));
+            QString nbbrstr(line.mid(41, 8));
             nbbrstr.remove('(').remove(')');
             double nbbr = clocale.toDouble(nbbrstr.trimmed(), &convok);
             if (convok)
@@ -782,5 +867,12 @@ void Decay::processENSDFLevels() const
                 normalizeGammaIntensToPercentParentDecay = nrbr;
         }
     }
+}
+
+double Decay::gauss(const double x, const double sigma) const
+{
+    double u = x / fabs(sigma);
+    double p = (1 / (sqrt(2 * M_PI) * fabs(sigma))) * exp(-u * u / 2);
+    return p;
 }
 

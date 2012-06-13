@@ -44,6 +44,8 @@ public:
 
     QString toText() const;
 
+    QVector<QPointF> gammaSpectrum(double fwhm) const;
+
 signals:
     
 private slots:
@@ -56,6 +58,7 @@ private:
     void alignGraphicsItems();
     void initializeStyle();
     void processENSDFLevels() const;
+    double gauss(const double x, const double sigma) const;
 
     Nuclide pNuc, dNuc;
     Type t;

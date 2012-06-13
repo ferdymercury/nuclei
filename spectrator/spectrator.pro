@@ -1,9 +1,3 @@
-#-------------------------------------------------
-#
-# Project created by QtCreator 2012-05-29T18:21:38
-#
-#-------------------------------------------------
-
 QT       += core gui
 
 TARGET = spectrator
@@ -38,3 +32,30 @@ HEADERS  += Spectrator.h \
     ClickableItem.h
 
 FORMS    += Spectrator.ui
+
+RESOURCES += \
+    spectrator.qrc
+
+# QWT ####################
+
+CONFIG += qwt
+
+exists( /usr/include/qwt/qwt.h ) {
+  INCLUDEPATH += /usr/include/qwt
+  LIBS += -lqwt
+}
+
+exists( /usr/include/qwt6/qwt.h ) {
+  INCLUDEPATH += /usr/include/qwt6
+  LIBS += -lqwt6
+}
+
+exists( /usr/include/qwt-qt4/qwt.h ) {
+  INCLUDEPATH += /usr/include/qwt-qt4
+  LIBS += -lqwt-qt4
+}
+
+exists( C://qwt//include//qwt.h ) {
+  INCLUDEPATH += C://qwt//include
+  LIBS += -LC://qwt//lib -lqwt6
+}

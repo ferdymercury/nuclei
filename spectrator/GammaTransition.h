@@ -18,10 +18,27 @@ class EnergyLevel;
 class GammaTransition : public ClickableItem
 {
 public:
-    GammaTransition(int64_t energyEV, double intensity, EnergyLevel *start, EnergyLevel *dest);
+    enum DeltaState {
+        SignMagnitudeDefined,
+        MagnitudeDefined,
+        UnknownDelta
+    };
+
+    GammaTransition(int64_t energyEV, double intensity,
+                    const QString &multipol, double delta, DeltaState deltastate,
+                    EnergyLevel *start, EnergyLevel *dest);
 
     int64_t energyEv() const;
     double intensity() const;
+    QString multipolarity() const;
+    double delta() const;
+    DeltaState deltaState() const;
+
+    QString intensityAsText() const;
+    QString energyAsText() const;
+    QString multipolarityAsText() const;
+    QString deltaAsText() const;
+
     EnergyLevel * depopulatedLevel() const;
     EnergyLevel * populatedLevel() const;
 
@@ -38,6 +55,9 @@ public:
 private:
     int64_t e;
     double intens;
+    QString m_mpol;
+    double m_delta;
+    DeltaState m_deltastate;
     EnergyLevel *m_start, *m_dest;
 
     QGraphicsLineItem *arrow;

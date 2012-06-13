@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>1100</width>
-    <height>780</height>
+    <width>1177</width>
+    <height>859</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -34,6 +34,7 @@
        <attribute name="title">
         <string>Energy Spectrum</string>
        </attribute>
+       <layout class="QVBoxLayout" name="energySpectrumTabLayout"/>
       </widget>
      </widget>
     </item>
@@ -46,6 +47,15 @@
    <attribute name="toolBarBreak">
     <bool>false</bool>
    </attribute>
+   <addaction name="actionZoom_In"/>
+   <addaction name="actionZoom_Out"/>
+   <addaction name="actionOriginal_Size"/>
+   <addaction name="actionShow_all"/>
+   <addaction name="separator"/>
+   <addaction name="actionLinear"/>
+   <addaction name="actionLogarithmic"/>
+   <addaction name="separator"/>
+   <addaction name="actionAbout"/>
   </widget>
   <widget class="QStatusBar" name="statusBar"/>
   <widget class="QDockWidget" name="decayCascadeDock">
@@ -66,7 +76,21 @@
      <property name="horizontalSpacing">
       <number>15</number>
      </property>
-     <item row="0" column="0" colspan="2">
+     <item row="2" column="0">
+      <widget class="QLabel" name="startEnergyLabel">
+       <property name="text">
+        <string>Energy:</string>
+       </property>
+      </widget>
+     </item>
+     <item row="3" column="0">
+      <widget class="QLabel" name="startSpinLabel">
+       <property name="text">
+        <string>Spin/Parity:</string>
+       </property>
+      </widget>
+     </item>
+     <item row="5" column="0" colspan="2">
       <widget class="QLabel" name="popGammaLabel">
        <property name="font">
         <font>
@@ -82,70 +106,86 @@
        </property>
       </widget>
      </item>
-     <item row="2" column="0" colspan="2">
+     <item row="7" column="0" colspan="2">
       <widget class="Line" name="line_4">
        <property name="orientation">
         <enum>Qt::Horizontal</enum>
        </property>
       </widget>
      </item>
-     <item row="3" column="0">
+     <item row="8" column="0">
       <widget class="QLabel" name="popEnergyLabel">
        <property name="text">
         <string>Energy:</string>
        </property>
       </widget>
      </item>
-     <item row="3" column="1">
+     <item row="8" column="1">
       <widget class="QLabel" name="popEnergy">
        <property name="text">
         <string>- keV</string>
        </property>
       </widget>
      </item>
-     <item row="4" column="0">
+     <item row="9" column="0">
       <widget class="QLabel" name="popIntensityLabel">
        <property name="text">
         <string>Relative Intensity:</string>
        </property>
       </widget>
      </item>
-     <item row="4" column="1">
+     <item row="9" column="1">
       <widget class="QLabel" name="popIntensity">
        <property name="text">
         <string>- %</string>
        </property>
       </widget>
      </item>
-     <item row="5" column="0">
+     <item row="10" column="0">
       <widget class="QLabel" name="popMultipolarityLabel">
        <property name="text">
         <string>Multipolarity:</string>
        </property>
       </widget>
      </item>
-     <item row="5" column="1">
+     <item row="10" column="1">
       <widget class="QLabel" name="popMultipolarity">
        <property name="text">
         <string>&lt;i&gt;unknown&lt;/i&gt;</string>
        </property>
       </widget>
      </item>
-     <item row="6" column="0">
+     <item row="11" column="0">
       <widget class="QLabel" name="popMixingLabel">
        <property name="text">
         <string>Mixing Ratio:</string>
        </property>
       </widget>
      </item>
-     <item row="6" column="1">
+     <item row="11" column="1">
       <widget class="QLabel" name="popMixing">
        <property name="text">
         <string>-</string>
        </property>
       </widget>
      </item>
-     <item row="8" column="0" colspan="2">
+     <item row="12" column="0" colspan="2">
+      <spacer name="verticalSpacer">
+       <property name="orientation">
+        <enum>Qt::Vertical</enum>
+       </property>
+       <property name="sizeType">
+        <enum>QSizePolicy::Fixed</enum>
+       </property>
+       <property name="sizeHint" stdset="0">
+        <size>
+         <width>0</width>
+         <height>8</height>
+        </size>
+       </property>
+      </spacer>
+     </item>
+     <item row="13" column="0" colspan="2">
       <widget class="QLabel" name="intermedLevelLabel">
        <property name="font">
         <font>
@@ -161,15 +201,50 @@
        </property>
       </widget>
      </item>
-     <item row="9" column="0" colspan="2">
+     <item row="14" column="0" colspan="2">
       <widget class="Line" name="line_3">
        <property name="orientation">
         <enum>Qt::Horizontal</enum>
        </property>
       </widget>
      </item>
-     <item row="7" column="0" colspan="2">
-      <spacer name="verticalSpacer">
+     <item row="15" column="0">
+      <widget class="QLabel" name="intEnergyLabel">
+       <property name="text">
+        <string>Energy:</string>
+       </property>
+      </widget>
+     </item>
+     <item row="15" column="1">
+      <widget class="QLabel" name="intEnergy">
+       <property name="text">
+        <string> - keV</string>
+       </property>
+      </widget>
+     </item>
+     <item row="16" column="0">
+      <widget class="QLabel" name="intHalfLifeLabel">
+       <property name="text">
+        <string>Half Life:</string>
+       </property>
+      </widget>
+     </item>
+     <item row="16" column="1">
+      <widget class="QLabel" name="intHalfLife">
+       <property name="text">
+        <string>- ns</string>
+       </property>
+      </widget>
+     </item>
+     <item row="17" column="1">
+      <widget class="QLabel" name="intSpin">
+       <property name="text">
+        <string>/</string>
+       </property>
+      </widget>
+     </item>
+     <item row="18" column="0" colspan="2">
+      <spacer name="verticalSpacer_2">
        <property name="orientation">
         <enum>Qt::Vertical</enum>
        </property>
@@ -179,33 +254,12 @@
        <property name="sizeHint" stdset="0">
         <size>
          <width>0</width>
-         <height>15</height>
+         <height>8</height>
         </size>
        </property>
       </spacer>
      </item>
-     <item row="11" column="0">
-      <widget class="QLabel" name="intHalfLifeLabel">
-       <property name="text">
-        <string>Half Life:</string>
-       </property>
-      </widget>
-     </item>
-     <item row="12" column="0">
-      <widget class="QLabel" name="intSpinLabel">
-       <property name="text">
-        <string>Spin/Parity:</string>
-       </property>
-      </widget>
-     </item>
-     <item row="10" column="0">
-      <widget class="QLabel" name="intEnergyLabel">
-       <property name="text">
-        <string>Energy:</string>
-       </property>
-      </widget>
-     </item>
-     <item row="14" column="0" colspan="2">
+     <item row="19" column="0" colspan="2">
       <widget class="QLabel" name="depopGammaLabel">
        <property name="font">
         <font>
@@ -221,103 +275,187 @@
        </property>
       </widget>
      </item>
-     <item row="13" column="0" colspan="2">
-      <spacer name="verticalSpacer_2">
-       <property name="orientation">
-        <enum>Qt::Vertical</enum>
-       </property>
-       <property name="sizeType">
-        <enum>QSizePolicy::Fixed</enum>
-       </property>
-       <property name="sizeHint" stdset="0">
-        <size>
-         <width>0</width>
-         <height>15</height>
-        </size>
-       </property>
-      </spacer>
-     </item>
-     <item row="15" column="0" colspan="2">
+     <item row="20" column="0" colspan="2">
       <widget class="Line" name="line_5">
        <property name="orientation">
         <enum>Qt::Horizontal</enum>
        </property>
       </widget>
      </item>
-     <item row="16" column="0">
+     <item row="21" column="0">
       <widget class="QLabel" name="depopEnergyLabel">
        <property name="text">
         <string>Energy:</string>
        </property>
       </widget>
      </item>
-     <item row="17" column="0">
-      <widget class="QLabel" name="depopIntensityLabel">
-       <property name="text">
-        <string>Relative Intensity:</string>
-       </property>
-      </widget>
-     </item>
-     <item row="18" column="0">
-      <widget class="QLabel" name="depopMultipolarityLabel">
-       <property name="text">
-        <string>Multipolarity:</string>
-       </property>
-      </widget>
-     </item>
-     <item row="19" column="0">
-      <widget class="QLabel" name="depopMixingLabel">
-       <property name="text">
-        <string>Mixing Ratio:</string>
-       </property>
-      </widget>
-     </item>
-     <item row="10" column="1">
-      <widget class="QLabel" name="intEnergy">
-       <property name="text">
-        <string> - keV</string>
-       </property>
-      </widget>
-     </item>
-     <item row="11" column="1">
-      <widget class="QLabel" name="intHalfLife">
-       <property name="text">
-        <string>- ns</string>
-       </property>
-      </widget>
-     </item>
-     <item row="12" column="1">
-      <widget class="QLabel" name="intSpin">
-       <property name="text">
-        <string>/</string>
-       </property>
-      </widget>
-     </item>
-     <item row="16" column="1">
+     <item row="21" column="1">
       <widget class="QLabel" name="depopEnergy">
        <property name="text">
         <string>- keV</string>
        </property>
       </widget>
      </item>
-     <item row="17" column="1">
+     <item row="22" column="0">
+      <widget class="QLabel" name="depopIntensityLabel">
+       <property name="text">
+        <string>Relative Intensity:</string>
+       </property>
+      </widget>
+     </item>
+     <item row="22" column="1">
       <widget class="QLabel" name="depopIntensity">
        <property name="text">
         <string>- %</string>
        </property>
       </widget>
      </item>
-     <item row="18" column="1">
+     <item row="23" column="0">
+      <widget class="QLabel" name="depopMultipolarityLabel">
+       <property name="text">
+        <string>Multipolarity:</string>
+       </property>
+      </widget>
+     </item>
+     <item row="23" column="1">
       <widget class="QLabel" name="depopMultipolarity">
        <property name="text">
         <string>&lt;i&gt;unknown&lt;/i&gt;</string>
        </property>
       </widget>
      </item>
-     <item row="19" column="1">
+     <item row="25" column="1">
       <widget class="QLabel" name="depopMixing">
        <property name="text">
         <string>-</string>
+       </property>
+      </widget>
+     </item>
+     <item row="1" column="0" colspan="2">
+      <widget class="Line" name="line_6">
+       <property name="orientation">
+        <enum>Qt::Horizontal</enum>
+       </property>
+      </widget>
+     </item>
+     <item row="0" column="0" colspan="2">
+      <widget class="QLabel" name="startLevelLabel">
+       <property name="font">
+        <font>
+         <weight>75</weight>
+         <bold>true</bold>
+        </font>
+       </property>
+       <property name="text">
+        <string>Start Level</string>
+       </property>
+       <property name="alignment">
+        <set>Qt::AlignCenter</set>
+       </property>
+      </widget>
+     </item>
+     <item row="4" column="0" colspan="2">
+      <spacer name="verticalSpacer_3">
+       <property name="orientation">
+        <enum>Qt::Vertical</enum>
+       </property>
+       <property name="sizeHint" stdset="0">
+        <size>
+         <width>0</width>
+         <height>8</height>
+        </size>
+       </property>
+      </spacer>
+     </item>
+     <item row="27" column="0" colspan="2">
+      <widget class="QLabel" name="endLevelLabel">
+       <property name="font">
+        <font>
+         <weight>75</weight>
+         <bold>true</bold>
+        </font>
+       </property>
+       <property name="text">
+        <string>End Level</string>
+       </property>
+       <property name="alignment">
+        <set>Qt::AlignCenter</set>
+       </property>
+      </widget>
+     </item>
+     <item row="26" column="0" colspan="2">
+      <spacer name="verticalSpacer_4">
+       <property name="orientation">
+        <enum>Qt::Vertical</enum>
+       </property>
+       <property name="sizeHint" stdset="0">
+        <size>
+         <width>0</width>
+         <height>8</height>
+        </size>
+       </property>
+      </spacer>
+     </item>
+     <item row="28" column="0" colspan="2">
+      <widget class="Line" name="line_7">
+       <property name="orientation">
+        <enum>Qt::Horizontal</enum>
+       </property>
+      </widget>
+     </item>
+     <item row="29" column="0">
+      <widget class="QLabel" name="endEnergyLabel">
+       <property name="text">
+        <string>Energy:</string>
+       </property>
+      </widget>
+     </item>
+     <item row="30" column="0">
+      <widget class="QLabel" name="endSpinLabel">
+       <property name="text">
+        <string>Spin/Parity:</string>
+       </property>
+      </widget>
+     </item>
+     <item row="29" column="1">
+      <widget class="QLabel" name="endEnergy">
+       <property name="text">
+        <string>- keV</string>
+       </property>
+      </widget>
+     </item>
+     <item row="30" column="1">
+      <widget class="QLabel" name="endSpin">
+       <property name="text">
+        <string>/</string>
+       </property>
+      </widget>
+     </item>
+     <item row="2" column="1">
+      <widget class="QLabel" name="startEnergy">
+       <property name="text">
+        <string>- keV</string>
+       </property>
+      </widget>
+     </item>
+     <item row="3" column="1">
+      <widget class="QLabel" name="startSpin">
+       <property name="text">
+        <string>/</string>
+       </property>
+      </widget>
+     </item>
+     <item row="17" column="0">
+      <widget class="QLabel" name="intSpinLabel">
+       <property name="text">
+        <string>Spin/Parity:</string>
+       </property>
+      </widget>
+     </item>
+     <item row="25" column="0">
+      <widget class="QLabel" name="depopMixingLabel">
+       <property name="text">
+        <string>Mixing Ratio:</string>
        </property>
       </widget>
      </item>
@@ -348,6 +486,9 @@
          </property>
          <property name="text">
           <string>Daughter Mass (A)</string>
+         </property>
+         <property name="buddy">
+          <cstring>aListWidget</cstring>
          </property>
         </widget>
        </item>
@@ -383,6 +524,9 @@
          <property name="text">
           <string>Daughter Nuclide</string>
          </property>
+         <property name="buddy">
+          <cstring>nuclideListWidget</cstring>
+         </property>
         </widget>
        </item>
        <item>
@@ -417,6 +561,9 @@
          <property name="text">
           <string>Decay</string>
          </property>
+         <property name="buddy">
+          <cstring>decayListWidget</cstring>
+         </property>
         </widget>
        </item>
        <item>
@@ -434,8 +581,116 @@
     </layout>
    </widget>
   </widget>
+  <widget class="QDockWidget" name="anisotropyDock">
+   <property name="allowedAreas">
+    <set>Qt::LeftDockWidgetArea|Qt::RightDockWidgetArea</set>
+   </property>
+   <property name="windowTitle">
+    <string>Anisotropies</string>
+   </property>
+   <attribute name="dockWidgetArea">
+    <number>2</number>
+   </attribute>
+   <widget class="QWidget" name="dockWidgetContents_3"/>
+  </widget>
+  <action name="actionZoom_In">
+   <property name="icon">
+    <iconset resource="spectrator.qrc">
+     <normaloff>:/zoom-in.png</normaloff>:/zoom-in.png</iconset>
+   </property>
+   <property name="text">
+    <string>Zoom In</string>
+   </property>
+   <property name="toolTip">
+    <string>Zoom In</string>
+   </property>
+   <property name="shortcut">
+    <string>Ctrl++</string>
+   </property>
+  </action>
+  <action name="actionZoom_Out">
+   <property name="icon">
+    <iconset resource="spectrator.qrc">
+     <normaloff>:/zoom-out.png</normaloff>:/zoom-out.png</iconset>
+   </property>
+   <property name="text">
+    <string>Zoom Out</string>
+   </property>
+   <property name="toolTip">
+    <string>Zoom Out</string>
+   </property>
+   <property name="shortcut">
+    <string>Ctrl+-</string>
+   </property>
+  </action>
+  <action name="actionShow_all">
+   <property name="icon">
+    <iconset resource="spectrator.qrc">
+     <normaloff>:/zoom-fit-best.png</normaloff>:/zoom-fit-best.png</iconset>
+   </property>
+   <property name="text">
+    <string>Show all</string>
+   </property>
+   <property name="toolTip">
+    <string>Show all</string>
+   </property>
+  </action>
+  <action name="actionOriginal_Size">
+   <property name="icon">
+    <iconset resource="spectrator.qrc">
+     <normaloff>:/zoom-original.png</normaloff>:/zoom-original.png</iconset>
+   </property>
+   <property name="text">
+    <string>Original Size</string>
+   </property>
+   <property name="toolTip">
+    <string>Zoom to Original Size</string>
+   </property>
+  </action>
+  <action name="actionAbout">
+   <property name="icon">
+    <iconset resource="spectrator.qrc">
+     <normaloff>:/help-about.png</normaloff>:/help-about.png</iconset>
+   </property>
+   <property name="text">
+    <string>About</string>
+   </property>
+   <property name="toolTip">
+    <string>About Spectrator</string>
+   </property>
+   <property name="shortcut">
+    <string>Ctrl+I</string>
+   </property>
+  </action>
+  <action name="actionLinear">
+   <property name="checkable">
+    <bool>true</bool>
+   </property>
+   <property name="checked">
+    <bool>true</bool>
+   </property>
+   <property name="text">
+    <string>Lin</string>
+   </property>
+   <property name="toolTip">
+    <string>Linear Y-Axis Scaling</string>
+   </property>
+  </action>
+  <action name="actionLogarithmic">
+   <property name="checkable">
+    <bool>true</bool>
+   </property>
+   <property name="text">
+    <string>Log</string>
+   </property>
+   <property name="toolTip">
+    <string>Logarithmic Y-Axis Scaling</string>
+   </property>
+  </action>
  </widget>
  <layoutdefault spacing="6" margin="11"/>
- <resources/>
+ <resources>
+  <include location="spectrator.qrc"/>
+ </resources>
  <connections/>
 </ui>

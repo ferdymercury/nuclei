@@ -19,9 +19,11 @@ const QPolygonF GammaTransition::arrowHeadShape = initArrowHead();
 const QPolygonF GammaTransition::arrowBaseShape = initArrowBase();
 
 
-GammaTransition::GammaTransition(int64_t energyEV, double intensity, EnergyLevel *start, EnergyLevel *dest)
+GammaTransition::GammaTransition(int64_t energyEV, double intensity,
+                                 const QString &multipol, double delta, DeltaState deltastate,
+                                 EnergyLevel *start, EnergyLevel *dest)
     : ClickableItem(ClickableItem::GammaTransitionType),
-      e(energyEV), intens(intensity), m_start(start), m_dest(dest),
+      e(energyEV), intens(intensity), m_mpol(multipol), m_delta(delta), m_deltastate(deltastate), m_start(start), m_dest(dest),
       arrow(0), text(0), arrowhead(0), arrowbase(0), clickarea(0), highlightHelper(0), mindist(0.0)
 {
     start->m_depopulatingTransitions.append(this);
@@ -36,6 +38,52 @@ int64_t GammaTransition::energyEv() const
 double GammaTransition::intensity() const
 {
     return intens;
+}
+
+QString GammaTransition::multipolarity() const
+{
+    return m_mpol;
+}
+
+double GammaTransition::delta() const
+{
+    return m_delta;
+}
+
+GammaTransition::DeltaState GammaTransition::deltaState() const
+{
+    return m_deltastate;
+}
+
+QString GammaTransition::intensityAsText() const
+{
+    QString intensstr;
+    if (!std::isnan(intens))
+        intensstr = QString("%1 %").arg(intens, 0, 'g', 3);
+    return intensstr;
+}
+
+QString GammaTransition::energyAsText() const
+{
+    return QString("%1 keV").arg(double(e)/1000.0);
+}
+
+QString GammaTransition::multipolarityAsText() const
+{
+    if (m_mpol.isEmpty())
+        return "<i>unknown</i>";
+    return m_mpol;
+}
+
+QString GammaTransition::deltaAsText() const
+{
+    if (m_deltastate == UnknownDelta)
+        return "<i>unknown</i>";
+
+    QString dstr(QString::number(m_delta));
+    if (m_deltastate == MagnitudeDefined)
+        dstr.prepend(QString::fromUtf8("± "));
+    return dstr;
 }
 
 EnergyLevel *GammaTransition::depopulatedLevel() const
@@ -73,10 +121,10 @@ ActiveGraphicsItemGroup *GammaTransition::createGammaGraphicsItem(const QFont &g
     arrow = new QGraphicsLineItem;
     arrow->setPen(m_pen);
 
-    QString intensstr;
-    if (!std::isnan(intens))
-        intensstr = QString("%1 % ").arg(intens, 0, 'g', 3);
-    QString textstr = QString("<html><body bgcolor=\"white\">%1<b>%2 keV</b></body></html>").arg(intensstr).arg(double(e)/1000.0);
+    QString intensstr = intensityAsText();
+    if (!intensstr.isEmpty())
+        intensstr += " ";
+    QString textstr = QString("<html><body bgcolor=\"white\">%1<b>%2</b> %3</body></html>").arg(intensstr).arg(energyAsText()).arg(m_mpol);
     text = new QGraphicsTextItem;
     text->setFont(gammaFont);
     text->document()->setDocumentMargin(0.0);
