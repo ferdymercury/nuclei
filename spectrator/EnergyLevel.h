@@ -7,16 +7,17 @@
 #include <QList>
 #include "HalfLife.h"
 #include "SpinParity.h"
-#include "GammaTransition.h"
+#include "ClickableItem.h"
 
 class ActiveGraphicsItemGroup;
 class QGraphicsLineItem;
 class QGraphicsSimpleTextItem;
 class QGraphicsPolygonItem;
 class GraphicsHighlightItem;
+class QGraphicsRectItem;
 class GammaTransition;
 
-class EnergyLevel
+class EnergyLevel : public ClickableItem
 {
 public:
     EnergyLevel(int64_t energyEV, SpinParity spin,
@@ -51,7 +52,6 @@ private:
     QList<GammaTransition*> m_populatingTransitions;
     QList<GammaTransition*> m_depopulatingTransitions;
 
-    ActiveGraphicsItemGroup *gragroup;
     QGraphicsLineItem *graline, *grafeedarrow;
     QGraphicsPolygonItem *graarrowhead;
     QGraphicsSimpleTextItem *graetext, *graspintext, *grahltext, *grafeedintens;

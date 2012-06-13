@@ -20,8 +20,9 @@ const QPolygonF GammaTransition::arrowBaseShape = initArrowBase();
 
 
 GammaTransition::GammaTransition(int64_t energyEV, double intensity, EnergyLevel *start, EnergyLevel *dest)
-    : e(energyEV), intens(intensity), m_start(start), m_dest(dest),
-      item(0), arrow(0), text(0), arrowhead(0), arrowbase(0), clickarea(0), highlightHelper(0), mindist(0.0)
+    : ClickableItem(ClickableItem::GammaTransitionType),
+      e(energyEV), intens(intensity), m_start(start), m_dest(dest),
+      arrow(0), text(0), arrowhead(0), arrowbase(0), clickarea(0), highlightHelper(0), mindist(0.0)
 {
     start->m_depopulatingTransitions.append(this);
     dest->m_populatingTransitions.append(this);
@@ -32,7 +33,7 @@ int64_t GammaTransition::energyEv() const
     return e;
 }
 
-QGraphicsItem *GammaTransition::createGammaGraphicsItem(const QFont &gammaFont, const QPen &gammaPen, const QPen &intenseGammaPen)
+ActiveGraphicsItemGroup *GammaTransition::createGammaGraphicsItem(const QFont &gammaFont, const QPen &gammaPen, const QPen &intenseGammaPen)
 {
     if (item)
         return item;
@@ -42,7 +43,8 @@ QGraphicsItem *GammaTransition::createGammaGraphicsItem(const QFont &gammaFont, 
         m_pen = intenseGammaPen;
 
     // group origin is set to the start level!
-    item = new ActiveGraphicsItemGroup;
+    item = new ActiveGraphicsItemGroup(this);
+    item->setActiveColor(QColor(64, 166, 255, 180));
 
     arrowhead = new QGraphicsPolygonItem(arrowHeadShape);
     arrowhead->setBrush(QBrush(m_pen.color()));
@@ -87,11 +89,6 @@ QGraphicsItem *GammaTransition::createGammaGraphicsItem(const QFont &gammaFont, 
 
     updateArrow();
 
-    return item;
-}
-
-QGraphicsItem * GammaTransition::gammaGraphicsItem() const
-{
     return item;
 }
 

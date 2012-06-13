@@ -14,6 +14,7 @@ class QGraphicsScene;
 class EnergyLevel;
 class QGraphicsLineItem;
 class QGraphicsSimpleTextItem;
+class ClickableItem;
 
 class Decay : public QObject
 {
@@ -39,7 +40,8 @@ public:
 
 signals:
     
-public slots:
+private slots:
+    void itemClicked(ClickableItem *item);
 
 private:
     void alignGraphicsItems();

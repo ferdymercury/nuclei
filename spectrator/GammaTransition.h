@@ -4,6 +4,7 @@
 #include <stdint.h>
 #include <QFont>
 #include <QPen>
+#include "ClickableItem.h"
 
 class QGraphicsItem;
 class ActiveGraphicsItemGroup;
@@ -14,15 +15,14 @@ class QGraphicsRectItem;
 class GraphicsHighlightItem;
 class EnergyLevel;
 
-class GammaTransition
+class GammaTransition : public ClickableItem
 {
 public:
     GammaTransition(int64_t energyEV, double intensity, EnergyLevel *start, EnergyLevel *dest);
 
     int64_t energyEv() const;
 
-    QGraphicsItem * createGammaGraphicsItem(const QFont &gammaFont, const QPen &gammaPen, const QPen &intenseGammaPen);
-    QGraphicsItem * gammaGraphicsItem() const;
+    ActiveGraphicsItemGroup * createGammaGraphicsItem(const QFont &gammaFont, const QPen &gammaPen, const QPen &intenseGammaPen);
     void updateArrow();
     double minimalXDistance() const;
     /**
@@ -37,7 +37,6 @@ private:
     double intens;
     EnergyLevel *m_start, *m_dest;
 
-    ActiveGraphicsItemGroup *item;
     QGraphicsLineItem *arrow;
     QGraphicsTextItem *text;
     QGraphicsPolygonItem *arrowhead, *arrowbase;

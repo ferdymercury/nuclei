@@ -21,7 +21,8 @@ SOURCES += main.cpp\
     GammaTransition.cpp \
     ActiveGraphicsItemGroup.cpp \
     GraphicsHighlightItem.cpp \
-    GraphicsDropShadowEffect.cpp
+    GraphicsDropShadowEffect.cpp \
+    ClickableItem.cpp
 
 HEADERS  += Spectrator.h \
     ENSDF.h \
@@ -33,6 +34,7 @@ HEADERS  += Spectrator.h \
     GammaTransition.h \
     ActiveGraphicsItemGroup.h \
     GraphicsHighlightItem.h \
-    GraphicsDropShadowEffect.h
+    GraphicsDropShadowEffect.h \
+    ClickableItem.h
 
 FORMS    += Spectrator.ui

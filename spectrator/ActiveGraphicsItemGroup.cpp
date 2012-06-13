@@ -3,22 +3,24 @@
 #include <QPen>
 #include <QParallelAnimationGroup>
 #include <QPropertyAnimation>
+#include <QGraphicsSceneMouseEvent>
 #include "GraphicsHighlightItem.h"
 #include "GraphicsDropShadowEffect.h"
+#include "ClickableItem.h"
 
-const QColor ActiveGraphicsItemGroup::shadowColor(178, 223, 150, 180);
+const QColor ActiveGraphicsItemGroup::hoverColor(178, 223, 150, 180);
 const double ActiveGraphicsItemGroup::animationDuration = 100.0;
 const bool ActiveGraphicsItemGroup::animateShadow = false;
 const bool ActiveGraphicsItemGroup::animate = false;
 
-ActiveGraphicsItemGroup::ActiveGraphicsItemGroup(QGraphicsItem * parent)
-    : QGraphicsItemGroup(parent), shadow(new GraphicsDropShadowEffect), m_shape(0), m_helper(0),
+ActiveGraphicsItemGroup::ActiveGraphicsItemGroup(ClickableItem *associatedItem)
+    : assocItem(associatedItem), shadow(new GraphicsDropShadowEffect), m_shape(0), m_helper(0),
+      m_highlighted(false), m_hover(false),
       aniHighlight(0), aniShadow(0), aniGroup(0)
 {
     // prepare highlighting
     shadow->setBlurRadius(15.0);
     shadow->setOffset(QPointF(0.0, 0.0));
-    shadow->setColor(shadowColor);
 
     setGraphicsEffect(shadow);
     setAcceptHoverEvents(true);
@@ -68,7 +70,7 @@ void ActiveGraphicsItemGroup::addHighlightHelper(GraphicsHighlightItem *helperit
         m_helper->hide();
     }
     m_helper->setPen(Qt::NoPen);
-    m_helper->setBrush(QBrush(shadowColor));
+    m_helper->setBrush(QBrush(hoverColor));
     addToGroup(m_helper);
 }
 
@@ -106,40 +108,87 @@ QPainterPath ActiveGraphicsItemGroup::shape() const
     return *m_shape;
 }
 
-void ActiveGraphicsItemGroup::hoverEnterEvent(QGraphicsSceneHoverEvent *event)
+void ActiveGraphicsItemGroup::setActiveColor(const QColor &color)
 {
-    setZValue(1.0);
-    if (animate) {
-        aniGroup->stop();
-        if (m_helper && !aniHighlight->targetObject())
-            aniHighlight->setTargetObject(m_helper);
-        aniGroup->setDirection(QAbstractAnimation::Forward);
-        aniGroup->start();
-        if (!aniShadow)
-            shadow->setOpacity(1.0);
-    }
-    else {
-        m_helper->show();
-        shadow->setEnabled(true);
-    }
-
+    activeColor = color;
 }
 
-void ActiveGraphicsItemGroup::hoverLeaveEvent(QGraphicsSceneHoverEvent *event)
+void ActiveGraphicsItemGroup::setHighlighted(bool hl)
 {
-    setZValue(0.0);
-    if (animate) {
-        aniGroup->stop();
-        if (m_helper && !aniHighlight->targetObject())
-            aniHighlight->setTargetObject(m_helper);
-        aniGroup->setDirection(QAbstractAnimation::Backward);
-        aniGroup->start();
-        if (!aniShadow)
-            shadow->setOpacity(0.0);
-    }
-    else {
-        m_helper->hide();
-        shadow->setEnabled(false);
-    }
+    m_highlighted = hl;
+    updateHighlightColor();
+}
 
+bool ActiveGraphicsItemGroup::isHighlighted() const
+{
+    return m_highlighted;
+}
+
+void ActiveGraphicsItemGroup::hoverEnterEvent(QGraphicsSceneHoverEvent *)
+{
+    m_hover = true;
+    updateHighlightColor();
+    if (!m_highlighted) {
+        setZValue(1.0);
+        if (animate) {
+            aniGroup->stop();
+            if (m_helper && !aniHighlight->targetObject())
+                aniHighlight->setTargetObject(m_helper);
+            aniGroup->setDirection(QAbstractAnimation::Forward);
+            aniGroup->start();
+            if (!aniShadow)
+                shadow->setOpacity(1.0);
+        }
+        else if (!m_highlighted) {
+            m_helper->show();
+            shadow->setEnabled(true);
+        }
+    }
+}
+
+void ActiveGraphicsItemGroup::hoverLeaveEvent(QGraphicsSceneHoverEvent *)
+{
+    m_hover = false;
+    updateHighlightColor();
+    if (!m_highlighted) {
+        setZValue(0.0);
+        if (animate) {
+            aniGroup->stop();
+            if (m_helper && !aniHighlight->targetObject())
+                aniHighlight->setTargetObject(m_helper);
+            aniGroup->setDirection(QAbstractAnimation::Backward);
+            aniGroup->start();
+            if (!aniShadow)
+                shadow->setOpacity(0.0);
+        }
+        else {
+            m_helper->hide();
+            shadow->setEnabled(false);
+        }
+    }
+}
+
+void ActiveGraphicsItemGroup::mousePressEvent(QGraphicsSceneMouseEvent *event)
+{
+    if (event->buttons() & (Qt::LeftButton | Qt::RightButton))
+        emit clicked(assocItem);
+}
+
+void ActiveGraphicsItemGroup::updateHighlightColor()
+{
+    QColor c;
+    if (m_highlighted && m_hover)
+        c = QColor::fromHsvF(
+                    0.5*(activeColor.hsvHueF()+hoverColor.hsvHueF()),
+                    0.5*(activeColor.hsvSaturationF()+hoverColor.hsvSaturationF()),
+                    0.5*(activeColor.valueF()+hoverColor.valueF()),
+                    0.5*(activeColor.alphaF()+hoverColor.alphaF())
+                    );
+    else if (m_highlighted)
+        c = activeColor;
+    else if (m_hover)
+        c = hoverColor;
+    shadow->setColor(c);
+    if (m_helper)
+        m_helper->setBrush(c);
 }

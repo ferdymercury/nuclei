@@ -7,8 +7,8 @@
 #include <QGraphicsDropShadowEffect>
 #include <QFontMetrics>
 #include <cmath>
-#include "ActiveGraphicsItemGroup.h"
 #include "EnergyLevel.h"
+#include "ActiveGraphicsItemGroup.h"
 #include "GammaTransition.h"
 #include "GraphicsHighlightItem.h"
 
@@ -134,9 +134,11 @@ QGraphicsScene * Decay::levelPlot()
         foreach (EnergyLevel *level, levels) {
             QFontMetrics stdBoldFontMetrics(stdBoldFont);
 
-            level->gragroup = new ActiveGraphicsItemGroup;
+            level->item = new ActiveGraphicsItemGroup(level);
+            level->item->setActiveColor(QColor(224, 186, 100, 180));
+            connect(level->item, SIGNAL(clicked(ClickableItem*)), this, SLOT(itemClicked(ClickableItem*)));
 
-            level->graline = new QGraphicsLineItem(-outerGammaMargin, 0.0, outerGammaMargin, 0.0, level->gragroup);
+            level->graline = new QGraphicsLineItem(-outerGammaMargin, 0.0, outerGammaMargin, 0.0, level->item);
             level->graline->setPen(levelPen);
             // thick line for stable/isomeric levels
             if (level->halfLife().isStable() || level->isomerNum() > 0)
@@ -150,27 +152,27 @@ QGraphicsScene * Decay::levelPlot()
             level->grahighlighthelper->setOpacity(0.0);
 
             QString etext = level->energyAsText();
-            level->graetext = new QGraphicsSimpleTextItem(etext, level->gragroup);
+            level->graetext = new QGraphicsSimpleTextItem(etext, level->item);
             level->graetext->setFont(stdBoldFont);
             level->graetext->setPos(0.0, -stdBoldFontMetrics.height());
 
             QString spintext = level->spin().toString();
-            level->graspintext = new QGraphicsSimpleTextItem(spintext, level->gragroup);
+            level->graspintext = new QGraphicsSimpleTextItem(spintext, level->item);
             level->graspintext->setFont(stdBoldFont);
             level->graspintext->setPos(0.0, -stdBoldFontMetrics.height());
 
             QString hltext = level->halfLife().toString();
-            level->grahltext = new QGraphicsSimpleTextItem(hltext, level->gragroup);
+            level->grahltext = new QGraphicsSimpleTextItem(hltext, level->item);
             level->grahltext->setFont(stdFont);
             level->grahltext->setPos(0.0, -0.5*stdBoldFontMetrics.height());
 
-            level->gragroup->addHighlightHelper(level->grahighlighthelper);
-            level->gragroup->addToGroup(level->graline);
-            level->gragroup->addToGroup(level->graclickarea);
-            level->gragroup->addToGroup(level->graetext);
-            level->gragroup->addToGroup(level->graspintext);
-            level->gragroup->addToGroup(level->grahltext);
-            scene->addItem(level->gragroup);
+            level->item->addHighlightHelper(level->grahighlighthelper);
+            level->item->addToGroup(level->graline);
+            level->item->addToGroup(level->graclickarea);
+            level->item->addToGroup(level->graetext);
+            level->item->addToGroup(level->graspintext);
+            level->item->addToGroup(level->grahltext);
+            scene->addItem(level->item);
 
             // plot feeding arrow if necessary
             double feedintensity = level->normalizedFeedIntensity();
@@ -199,7 +201,8 @@ QGraphicsScene * Decay::levelPlot()
         foreach (EnergyLevel *level, levels) {
             QList<GammaTransition*> levelgammas = level->depopulatingTransitions();
             foreach (GammaTransition *gamma, levelgammas) {
-                QGraphicsItem *item = gamma->createGammaGraphicsItem(gammaFont, gammaPen, intenseGammaPen);
+                ActiveGraphicsItemGroup *item = gamma->createGammaGraphicsItem(gammaFont, gammaPen, intenseGammaPen);
+                connect(item, SIGNAL(clicked(ClickableItem*)), this, SLOT(itemClicked(ClickableItem*)));
                 scene->addItem(item);
             }
         }
@@ -271,6 +274,11 @@ QString Decay::toText() const
     return result;
 }
 
+void Decay::itemClicked(ClickableItem *item)
+{
+    item->graphicsItem()->setHighlighted(!item->graphicsItem()->isHighlighted());
+}
+
 void Decay::alignGraphicsItems()
 {
     // decide if parent nuclide should be printed on the left side (beta-),
@@ -308,7 +316,7 @@ void Decay::alignGraphicsItems()
         maxEnergyGap = qMax(maxEnergyGap, diff);
     }
     for (QMap<int64_t, EnergyLevel*>::const_iterator i=levels.begin()+1; i!=levels.end(); i++) {
-        double minheight = 0.5*(i.value()->gragroup->boundingRect().height() + (i-1).value()->gragroup->boundingRect().height());
+        double minheight = 0.5*(i.value()->item->boundingRect().height() + (i-1).value()->item->boundingRect().height());
         double extraheight = maxExtraLevelDistance * (double(i.key()) - double((i-1).key())) / maxEnergyGap;
         i.value()->graYPos = std::floor((i-1).value()->graYPos - minheight - extraheight) + 0.5*i.value()->graline->pen().widthF();
     }
@@ -339,7 +347,7 @@ void Decay::alignGraphicsItems()
                 currentgammapos -= gamma->minimalXDistance();
             }
             gamma->updateArrow();
-            gamma->gammaGraphicsItem()->setPos(std::floor(currentgammapos)+0.5*gamma->pen().widthF(), level->graYPos + 0.5*level->graline->pen().widthF());
+            gamma->graphicsItem()->setPos(std::floor(currentgammapos)+0.5*gamma->pen().widthF(), level->graYPos + 0.5*level->graline->pen().widthF());
         }
     }
 
@@ -370,7 +378,7 @@ void Decay::alignGraphicsItems()
         }
         level->grahltext->setPos(levelHlPos, -0.5*stdBoldFontMetrics.height());
 
-        level->gragroup->setPos(0.0, level->graYPos); // add 0.5*pen-width to avoid antialiasing artifacts
+        level->item->setPos(0.0, level->graYPos); // add 0.5*pen-width to avoid antialiasing artifacts
 
         if (level->grafeedarrow) {
             double leftend = (parentpos == RightParent) ? rightlinelength + arrowGap + arrowHeadLength : -leftlinelength - pNucLineLength - parentNuclideLevelLineExtraLength;
@@ -390,8 +398,8 @@ void Decay::alignGraphicsItems()
     // set position of parent nuclide
     if (parentpos == LeftParent || parentpos == RightParent) {
         int64_t maxEnergy = (levels.end()-1).key();
-        double parentY = levels.value(maxEnergy)->gragroup->y() -
-                levels.value(maxEnergy)->gragroup->boundingRect().height() -
+        double parentY = levels.value(maxEnergy)->item->y() -
+                levels.value(maxEnergy)->item->boundingRect().height() -
                 pNuc.nuclideGraphicsItem()->boundingRect().height() - parentNuclideToEnergyLevelsDistance;
 
         double parentcenter;

@@ -8,11 +8,13 @@ class GraphicsDropShadowEffect;
 class GraphicsHighlightItem;
 class QPropertyAnimation;
 class QParallelAnimationGroup;
+class ClickableItem;
 
-class ActiveGraphicsItemGroup : public QGraphicsItemGroup
+class ActiveGraphicsItemGroup : public QObject, public QGraphicsItemGroup
 {
+    Q_OBJECT
 public:
-    ActiveGraphicsItemGroup(QGraphicsItem *parent = 0);
+    ActiveGraphicsItemGroup(ClickableItem *associatedItem);
     ~ActiveGraphicsItemGroup();
     void addToGroup(QGraphicsItem * item);
     void addHighlightHelper(GraphicsHighlightItem *helperitem);
@@ -20,20 +22,31 @@ public:
     void setPos(const QPointF & pos);
     void setPos(qreal x, qreal y);
     virtual QPainterPath shape() const;
+    void setActiveColor(const QColor &color);
+    void setHighlighted(bool active);
+    bool isHighlighted() const;
+
+signals:
+    void clicked(ClickableItem *item);
 
 protected:
     virtual void hoverEnterEvent(QGraphicsSceneHoverEvent * event);
     virtual void hoverLeaveEvent(QGraphicsSceneHoverEvent * event);
+    virtual void mousePressEvent(QGraphicsSceneMouseEvent * event);
 
 private:
+    void updateHighlightColor();
+    ClickableItem *assocItem;
     GraphicsDropShadowEffect *shadow;
     mutable QPainterPath *m_shape;
     mutable GraphicsHighlightItem *m_helper;
+    bool m_highlighted, m_hover;
 
     QPropertyAnimation *aniHighlight, *aniShadow;
     QParallelAnimationGroup *aniGroup;
+    QColor activeColor;
 
-    static const QColor shadowColor;
+    static const QColor hoverColor;
     static const double animationDuration;
     static const bool animateShadow;
     static const bool animate;
