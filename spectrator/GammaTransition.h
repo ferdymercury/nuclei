@@ -21,6 +21,7 @@ public:
     GammaTransition(int64_t energyEV, double intensity, EnergyLevel *start, EnergyLevel *dest);
 
     int64_t energyEv() const;
+    double intensity() const;
     EnergyLevel * depopulatedLevel() const;
     EnergyLevel * populatedLevel() const;
 

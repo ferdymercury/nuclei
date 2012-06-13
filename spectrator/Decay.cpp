@@ -11,6 +11,7 @@
 #include "ActiveGraphicsItemGroup.h"
 #include "GammaTransition.h"
 #include "GraphicsHighlightItem.h"
+#include "ui_Spectrator.h"
 
 const double Decay::outerGammaMargin = 50.0;
 const double Decay::outerLevelTextMargin = 4.0; // level lines extend beyond the beginning/end of the level texts by this value
@@ -30,6 +31,7 @@ Decay::Decay(Nuclide parentNuclide, Nuclide daughterNuclide, Type decayType, QOb
       parentDecayStartEnergyEv(0),
       normalizeDecIntensToPercentParentDecay(1.0),
       normalizeGammaIntensToPercentParentDecay(1.0),
+      scene(0), ui(0),
       pNucBaseLevel(0), pNucStartLevel(0), pNucVerticalArrow(0), pNucHl(0), pNucBaseEnergy(0), pNucEnergy(0), pNucSpin(0),
       firstSelectedGamma(0), secondSelectedGamma(0), selectedEnergyLevel(0)
 {
@@ -43,7 +45,7 @@ Decay::Decay(const QStringList &ensdfData, QObject *parent)
       parentDecayStartEnergyEv(0),
       normalizeDecIntensToPercentParentDecay(1.0),
       normalizeGammaIntensToPercentParentDecay(1.0),
-      ensdf(ensdfData), scene(0),
+      ensdf(ensdfData), scene(0), ui(0),
       firstSelectedGamma(0), secondSelectedGamma(0), selectedEnergyLevel(0)
 {
     Q_ASSERT(!ensdf.isEmpty());
@@ -265,6 +267,11 @@ QGraphicsScene * Decay::levelPlot()
     return scene;
 }
 
+void Decay::setUpdateableUi(Ui::Spectrator *updui)
+{
+    ui = updui;
+}
+
 QString Decay::toText() const
 {
     QString result;
@@ -365,6 +372,8 @@ void Decay::clickedGamma(GammaTransition *g)
             selectedEnergyLevel->graphicsItem()->setHighlighted(true);
         }
     }
+
+    updateDecayDataLabels();
 }
 
 void Decay::clickedEnergyLevel(EnergyLevel *e)
@@ -407,6 +416,55 @@ void Decay::clickedEnergyLevel(EnergyLevel *e)
         firstSelectedGamma->graphicsItem()->setHighlighted(false);
         firstSelectedGamma = secondSelectedGamma;
         secondSelectedGamma = 0;
+    }
+
+    updateDecayDataLabels();
+}
+
+void Decay::updateDecayDataLabels()
+{
+    if (!ui)
+        return;
+
+    // intermediate level
+    if (selectedEnergyLevel) {
+        ui->intEnergy->setText(selectedEnergyLevel->energyAsText());
+        ui->intHalfLife->setText(selectedEnergyLevel->halfLife().toString());
+        ui->intSpin->setText(selectedEnergyLevel->spin().toString());
+    }
+    else {
+        ui->intEnergy->setText("- keV");
+        ui->intHalfLife->setText("- ns");
+        ui->intSpin->setText("/");
+    }
+
+    // gammas
+    GammaTransition *pop = 0, *depop = 0;
+    if (firstSelectedGamma) {
+        if (firstSelectedGamma->depopulatedLevel() == selectedEnergyLevel)
+            depop = firstSelectedGamma;
+        else
+            pop = firstSelectedGamma;
+    }
+    if (secondSelectedGamma) {
+        if (secondSelectedGamma->depopulatedLevel() == selectedEnergyLevel)
+            depop = secondSelectedGamma;
+        else
+            pop = secondSelectedGamma;
+    }
+
+    // populating
+    if (pop) {
+        ui->popEnergy->setText(QString("%1 keV").arg(double(pop->energyEv())/1000.0));
+        ui->popIntensity->setText(QString("%1 %").arg(pop->intensity()));
+        ui->popMultipolarity->setText("");
+        ui->popMixing->setText("");
+    }
+    else {
+        ui->popEnergy->setText("- keV");
+        ui->popIntensity->setText("- %");
+        ui->popMultipolarity->setText("<i>unknown</i>");
+        ui->popMixing->setText("-");
     }
 }
 

@@ -33,6 +33,11 @@ int64_t GammaTransition::energyEv() const
     return e;
 }
 
+double GammaTransition::intensity() const
+{
+    return intens;
+}
+
 EnergyLevel *GammaTransition::depopulatedLevel() const
 {
     return m_start;

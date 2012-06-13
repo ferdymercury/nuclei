@@ -65,6 +65,7 @@ void Spectrator::selectedDecay(QListWidgetItem* newitem, QListWidgetItem*)
         return;
 
     QSharedPointer<Decay> decay = newitem->data(Qt::UserRole).value< QSharedPointer<Decay> >();
+    decay->setUpdateableUi(ui);
     QGraphicsScene *scene = decay->levelPlot();
     ui->decayView->setScene(scene);
     ui->decayView->setSceneRect(scene->sceneRect().adjusted(-20, -20, 20, 20));
