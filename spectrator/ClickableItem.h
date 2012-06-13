@@ -13,8 +13,8 @@ public:
     };
 
     ClickableItem(Type type);
-    Type type() const;
-    ActiveGraphicsItemGroup * graphicsItem() const;
+    virtual Type type() const;
+    virtual ActiveGraphicsItemGroup * graphicsItem() const;
 
 protected:
     ActiveGraphicsItemGroup *item;

@@ -35,6 +35,8 @@ protected:
     virtual void mousePressEvent(QGraphicsSceneMouseEvent * event);
 
 private:
+    void showHighlighting();
+    void hideHighlighting();
     void updateHighlightColor();
     ClickableItem *assocItem;
     GraphicsDropShadowEffect *shadow;

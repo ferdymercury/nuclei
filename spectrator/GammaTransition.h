@@ -21,6 +21,8 @@ public:
     GammaTransition(int64_t energyEV, double intensity, EnergyLevel *start, EnergyLevel *dest);
 
     int64_t energyEv() const;
+    EnergyLevel * depopulatedLevel() const;
+    EnergyLevel * populatedLevel() const;
 
     ActiveGraphicsItemGroup * createGammaGraphicsItem(const QFont &gammaFont, const QPen &gammaPen, const QPen &intenseGammaPen);
     void updateArrow();

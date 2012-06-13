@@ -33,6 +33,16 @@ int64_t GammaTransition::energyEv() const
     return e;
 }
 
+EnergyLevel *GammaTransition::depopulatedLevel() const
+{
+    return m_start;
+}
+
+EnergyLevel *GammaTransition::populatedLevel() const
+{
+    return m_dest;
+}
+
 ActiveGraphicsItemGroup *GammaTransition::createGammaGraphicsItem(const QFont &gammaFont, const QPen &gammaPen, const QPen &intenseGammaPen)
 {
     if (item)

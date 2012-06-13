@@ -15,6 +15,7 @@ class EnergyLevel;
 class QGraphicsLineItem;
 class QGraphicsSimpleTextItem;
 class ClickableItem;
+class GammaTransition;
 
 class Decay : public QObject
 {
@@ -44,6 +45,8 @@ private slots:
     void itemClicked(ClickableItem *item);
 
 private:
+    void clickedGamma(GammaTransition *g);
+    void clickedEnergyLevel(EnergyLevel *e);
     void alignGraphicsItems();
     void initializeStyle();
     void processENSDFLevels() const;
@@ -69,6 +72,10 @@ private:
     // style
     QFont stdFont, stdBoldFont, nucFont, nucIndexFont, parentHlFont, feedIntensityFont, gammaFont;
     QPen levelPen, stableLevelPen, feedArrowPen, intenseFeedArrowPen, gammaPen, intenseGammaPen;
+
+    // highlighted items
+    GammaTransition *firstSelectedGamma, *secondSelectedGamma;
+    EnergyLevel *selectedEnergyLevel;
 
     static const double outerGammaMargin; // margin between level texts (spin, energy) and gammas
     static const double outerLevelTextMargin; // level lines extend beyond the beginning/end of the level texts by this value

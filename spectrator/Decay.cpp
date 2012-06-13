@@ -30,7 +30,8 @@ Decay::Decay(Nuclide parentNuclide, Nuclide daughterNuclide, Type decayType, QOb
       parentDecayStartEnergyEv(0),
       normalizeDecIntensToPercentParentDecay(1.0),
       normalizeGammaIntensToPercentParentDecay(1.0),
-      pNucBaseLevel(0), pNucStartLevel(0), pNucVerticalArrow(0), pNucHl(0), pNucBaseEnergy(0), pNucEnergy(0), pNucSpin(0)
+      pNucBaseLevel(0), pNucStartLevel(0), pNucVerticalArrow(0), pNucHl(0), pNucBaseEnergy(0), pNucEnergy(0), pNucSpin(0),
+      firstSelectedGamma(0), secondSelectedGamma(0), selectedEnergyLevel(0)
 {
 }
 
@@ -42,7 +43,8 @@ Decay::Decay(const QStringList &ensdfData, QObject *parent)
       parentDecayStartEnergyEv(0),
       normalizeDecIntensToPercentParentDecay(1.0),
       normalizeGammaIntensToPercentParentDecay(1.0),
-      ensdf(ensdfData), scene(0)
+      ensdf(ensdfData), scene(0),
+      firstSelectedGamma(0), secondSelectedGamma(0), selectedEnergyLevel(0)
 {
     Q_ASSERT(!ensdf.isEmpty());
 
@@ -276,7 +278,136 @@ QString Decay::toText() const
 
 void Decay::itemClicked(ClickableItem *item)
 {
-    item->graphicsItem()->setHighlighted(!item->graphicsItem()->isHighlighted());
+    if (item->type() == ClickableItem::EnergyLevelType)
+        clickedEnergyLevel(dynamic_cast<EnergyLevel*>(item));
+    else if (item->type() == ClickableItem::GammaTransitionType)
+        clickedGamma(dynamic_cast<GammaTransition*>(item));
+}
+
+void Decay::clickedGamma(GammaTransition *g)
+{
+    if (!g)
+        return;
+
+    // deselect if active level is clicked again
+    if (g == firstSelectedGamma) {
+        firstSelectedGamma->graphicsItem()->setHighlighted(false);
+        firstSelectedGamma = secondSelectedGamma;
+        secondSelectedGamma = 0;
+    }
+    else if (g == secondSelectedGamma) {
+        secondSelectedGamma->graphicsItem()->setHighlighted(false);
+        secondSelectedGamma = 0;
+    }
+    else {
+        // deselect inappropriate level(s)
+        bool firstok = false;
+        if (firstSelectedGamma)
+            firstok = g->populatedLevel() == firstSelectedGamma->depopulatedLevel() ||
+                    g->depopulatedLevel() == firstSelectedGamma->populatedLevel();
+        bool secondok = false;
+        if (secondSelectedGamma)
+            secondok = g->populatedLevel() == secondSelectedGamma->depopulatedLevel() ||
+                    g->depopulatedLevel() == secondSelectedGamma->populatedLevel();
+
+        if (firstok && secondok) {
+            firstSelectedGamma->graphicsItem()->setHighlighted(false);
+            firstSelectedGamma = secondSelectedGamma;
+            secondSelectedGamma = 0;
+        }
+        else if (firstok) {
+            if (secondSelectedGamma) {
+                secondSelectedGamma->graphicsItem()->setHighlighted(false);
+                secondSelectedGamma = 0;
+            }
+        }
+        else if (secondok) {
+            Q_ASSERT(firstSelectedGamma);
+            firstSelectedGamma->graphicsItem()->setHighlighted(false);
+            firstSelectedGamma = secondSelectedGamma;
+            secondSelectedGamma = 0;
+        }
+        else {
+            if (firstSelectedGamma) {
+                firstSelectedGamma->graphicsItem()->setHighlighted(false);
+                firstSelectedGamma = 0;
+            }
+            if (secondSelectedGamma) {
+                secondSelectedGamma->graphicsItem()->setHighlighted(false);
+                secondSelectedGamma = 0;
+            }
+        }
+
+        // case: no gamma previously selected
+        if (!firstSelectedGamma && !secondSelectedGamma) {
+            firstSelectedGamma = g;
+            firstSelectedGamma->graphicsItem()->setHighlighted(true);
+            if (selectedEnergyLevel) {
+                if (g->populatedLevel() != selectedEnergyLevel && g->depopulatedLevel() != selectedEnergyLevel) {
+                    selectedEnergyLevel->graphicsItem()->setHighlighted(false);
+                    selectedEnergyLevel = 0;
+                }
+            }
+        }
+        // case: one gamma previously selected, common level exists
+        else {
+            secondSelectedGamma = g;
+            secondSelectedGamma->graphicsItem()->setHighlighted(true);
+            // select intermediate level
+            EnergyLevel *intermediate = firstSelectedGamma->populatedLevel();
+            if (firstSelectedGamma->depopulatedLevel() == secondSelectedGamma->populatedLevel())
+                intermediate = firstSelectedGamma->depopulatedLevel();
+            // activate intermediate level
+            if (selectedEnergyLevel)
+                if (selectedEnergyLevel != intermediate)
+                    selectedEnergyLevel->graphicsItem()->setHighlighted(false);
+            selectedEnergyLevel = intermediate;
+            selectedEnergyLevel->graphicsItem()->setHighlighted(true);
+        }
+    }
+}
+
+void Decay::clickedEnergyLevel(EnergyLevel *e)
+{
+    if (!e)
+        return;
+
+    // deselect if clicked again
+    if (e == selectedEnergyLevel) {
+        selectedEnergyLevel->graphicsItem()->setHighlighted(false);
+        selectedEnergyLevel = 0;
+    }
+    // select otherwise
+    else {
+        // deselect old level
+        if (selectedEnergyLevel)
+            selectedEnergyLevel->graphicsItem()->setHighlighted(false);
+        selectedEnergyLevel = e;
+        e->graphicsItem()->setHighlighted(true);
+        // deselect gamma which is not connected to the level anymore
+        if (firstSelectedGamma) {
+            if (firstSelectedGamma->depopulatedLevel() != e && firstSelectedGamma->populatedLevel() != e) {
+                firstSelectedGamma->graphicsItem()->setHighlighted(false);
+                firstSelectedGamma = 0;
+            }
+        }
+        if (secondSelectedGamma) {
+            if (secondSelectedGamma->depopulatedLevel() != e && secondSelectedGamma->populatedLevel() != e) {
+                secondSelectedGamma->graphicsItem()->setHighlighted(false);
+                secondSelectedGamma = 0;
+            }
+        }
+        if (secondSelectedGamma && !firstSelectedGamma) {
+            firstSelectedGamma = secondSelectedGamma;
+            secondSelectedGamma = 0;
+        }
+    }
+    // prevent two gammas being active after the intermediate level was changed
+    if (firstSelectedGamma && secondSelectedGamma) {
+        firstSelectedGamma->graphicsItem()->setHighlighted(false);
+        firstSelectedGamma = secondSelectedGamma;
+        secondSelectedGamma = 0;
+    }
 }
 
 void Decay::alignGraphicsItems()

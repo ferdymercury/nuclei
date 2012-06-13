@@ -116,7 +116,13 @@ void ActiveGraphicsItemGroup::setActiveColor(const QColor &color)
 void ActiveGraphicsItemGroup::setHighlighted(bool hl)
 {
     m_highlighted = hl;
-    updateHighlightColor();
+    if (!m_highlighted && !m_hover)
+        hideHighlighting();
+    if (m_highlighted && !m_hover)
+        showHighlighting();
+
+    if (hl || (!hl && m_hover))
+        updateHighlightColor();
 }
 
 bool ActiveGraphicsItemGroup::isHighlighted() const
@@ -128,50 +134,59 @@ void ActiveGraphicsItemGroup::hoverEnterEvent(QGraphicsSceneHoverEvent *)
 {
     m_hover = true;
     updateHighlightColor();
-    if (!m_highlighted) {
-        setZValue(1.0);
-        if (animate) {
-            aniGroup->stop();
-            if (m_helper && !aniHighlight->targetObject())
-                aniHighlight->setTargetObject(m_helper);
-            aniGroup->setDirection(QAbstractAnimation::Forward);
-            aniGroup->start();
-            if (!aniShadow)
-                shadow->setOpacity(1.0);
-        }
-        else if (!m_highlighted) {
-            m_helper->show();
-            shadow->setEnabled(true);
-        }
-    }
+    if (!m_highlighted)
+        showHighlighting();
 }
 
 void ActiveGraphicsItemGroup::hoverLeaveEvent(QGraphicsSceneHoverEvent *)
 {
     m_hover = false;
-    updateHighlightColor();
-    if (!m_highlighted) {
-        setZValue(0.0);
-        if (animate) {
-            aniGroup->stop();
-            if (m_helper && !aniHighlight->targetObject())
-                aniHighlight->setTargetObject(m_helper);
-            aniGroup->setDirection(QAbstractAnimation::Backward);
-            aniGroup->start();
-            if (!aniShadow)
-                shadow->setOpacity(0.0);
-        }
-        else {
-            m_helper->hide();
-            shadow->setEnabled(false);
-        }
-    }
+    if (m_highlighted)
+        updateHighlightColor();
+    if (!m_highlighted)
+        hideHighlighting();
 }
 
 void ActiveGraphicsItemGroup::mousePressEvent(QGraphicsSceneMouseEvent *event)
 {
     if (event->buttons() & (Qt::LeftButton | Qt::RightButton))
         emit clicked(assocItem);
+}
+
+void ActiveGraphicsItemGroup::showHighlighting()
+{
+    setZValue(1.0);
+    if (animate) {
+        aniGroup->stop();
+        if (m_helper && !aniHighlight->targetObject())
+            aniHighlight->setTargetObject(m_helper);
+        aniGroup->setDirection(QAbstractAnimation::Forward);
+        aniGroup->start();
+        if (!aniShadow)
+            shadow->setOpacity(1.0);
+    }
+    else {
+        m_helper->show();
+        shadow->setEnabled(true);
+    }
+}
+
+void ActiveGraphicsItemGroup::hideHighlighting()
+{
+    setZValue(0.0);
+    if (animate) {
+        aniGroup->stop();
+        if (m_helper && !aniHighlight->targetObject())
+            aniHighlight->setTargetObject(m_helper);
+        aniGroup->setDirection(QAbstractAnimation::Backward);
+        aniGroup->start();
+        if (!aniShadow)
+            shadow->setOpacity(0.0);
+    }
+    else {
+        m_helper->hide();
+        shadow->setEnabled(false);
+    }
 }
 
 void ActiveGraphicsItemGroup::updateHighlightColor()
