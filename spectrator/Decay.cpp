@@ -33,7 +33,7 @@ Decay::Decay(Nuclide parentNuclide, Nuclide daughterNuclide, Type decayType, QOb
       parentDecayStartEnergyEv(0),
       normalizeDecIntensToPercentParentDecay(1.0),
       normalizeGammaIntensToPercentParentDecay(1.0),
-      scene(0), ui(0), main(0),
+      scene(0), ui(0),
       pNucBaseLevel(0), pNucStartLevel(0), pNucVerticalArrow(0), pNucHl(0), pNucBaseEnergy(0), pNucEnergy(0), pNucSpin(0),
       firstSelectedGamma(0), secondSelectedGamma(0), selectedEnergyLevel(0)
 {
@@ -269,10 +269,9 @@ QGraphicsScene * Decay::levelPlot()
     return scene;
 }
 
-void Decay::setUpdateableUi(Ui::SpectratorMainWindow *updui, Spectrator *mc)
+void Decay::setUpdateableUi(Ui::SpectratorMainWindow *updui)
 {
     ui = updui;
-    main = mc;
 }
 
 QString Decay::toText() const
@@ -302,12 +301,12 @@ QVector<QPointF> Decay::gammaSpectrum(double fwhm) const
     // determine sigma
     double sigma = fwhm / (2.0*sqrt(2.0*M_LN2));
 
-    // create result vector (on interval [0, max+2*fwhm])
-    QVector<QPointF> result(max/1000+1 + qRound(2.0*fwhm));
+    // create result vector (on interval [0, max+2*fwhm], stepwidth: 2)
+    QVector<QPointF> result((max/1000+1 + qRound(2.0*fwhm))/2+1);
 
     // compute values
     for (int i=0; i<result.size(); i++) {
-        result[i].setX(double(i)+0.5);
+        result[i].setX(double(i*2+1));
         for (QMap<int64_t, double>::const_iterator gamma=gammas.begin(); gamma!=gammas.end(); gamma++) {
             result[i].ry() += gamma.value() * gauss(result[i].x() - double(gamma.key())/1000.0, sigma);
         }
@@ -527,8 +526,6 @@ void Decay::updateDecayDataLabels()
         ui->endEnergy->setText("- keV");
         ui->endSpin->setText("/");
     }
-
-    main->updateDockWidth();
 }
 
 void Decay::alignGraphicsItems()

@@ -11,6 +11,8 @@ class ENSDF;
 class QListWidgetItem;
 class QwtPlot;
 class QwtPlotCurve;
+class QwtPlotZoomer;
+class QDoubleSpinBox;
 
 class Spectrator : public QMainWindow
 {
@@ -20,12 +22,12 @@ public:
     explicit Spectrator(QWidget *parent = 0);
     ~Spectrator();
 
-    void updateDockWidth();
-
 private slots:
     void selectedA(const QString &a);
     void selectedNuclide(const QString &nuclide);
     void selectedDecay(QListWidgetItem* newitem, QListWidgetItem*);
+
+    void updateEnergySpectrum();
 
     void showAll();
     void showOriginalSize();
@@ -36,15 +38,24 @@ private slots:
     void setPlotLog();
 
     void showAbout();
+
+protected:
+    virtual void resizeEvent(QResizeEvent *event); // workaround
     
 private:
-    bool eventFilter(QObject *obj, QEvent *event);
-    bool limitInfoWidth;
+    bool eventFilter(QObject *obj, QEvent *event); // workaround
+    void resizeDockHelper(); // workaround
+    bool avoidInfoDockResizeRecursion, avoidAnisotropDockResizeRecursion; // workaround
+
     Ui::SpectratorMainWindow *ui;
 
     ENSDF *currentMassChain;
     QList< QSharedPointer<Decay> > decays;
+    QSharedPointer<Decay> decay;
+
+    QDoubleSpinBox *eres;
     QwtPlot *plot;
+    QwtPlotZoomer *zoomer;
     QwtPlotCurve *curve;
 };
 

@@ -32,6 +32,9 @@
    <layout class="QVBoxLayout" name="verticalLayout_3"/>
   </widget>
   <widget class="QToolBar" name="mainToolBar">
+   <property name="windowTitle">
+    <string>Common Tool Bar</string>
+   </property>
    <attribute name="toolBarArea">
     <enum>TopToolBarArea</enum>
    </attribute>
@@ -42,11 +45,6 @@
    <addaction name="actionZoom_Out"/>
    <addaction name="actionOriginal_Size"/>
    <addaction name="actionShow_all"/>
-   <addaction name="separator"/>
-   <addaction name="actionLinear"/>
-   <addaction name="actionLogarithmic"/>
-   <addaction name="separator"/>
-   <addaction name="actionAbout"/>
   </widget>
   <widget class="QStatusBar" name="statusBar"/>
   <widget class="QDockWidget" name="decayInfoDock">
@@ -636,6 +634,31 @@
    <widget class="QWidget" name="energySpectrumDockWidget">
     <layout class="QVBoxLayout" name="energySpectrumLayout"/>
    </widget>
+  </widget>
+  <widget class="QToolBar" name="energySpectrumBar">
+   <property name="windowTitle">
+    <string>Energy Spectrum Tool Bar</string>
+   </property>
+   <attribute name="toolBarArea">
+    <enum>TopToolBarArea</enum>
+   </attribute>
+   <attribute name="toolBarBreak">
+    <bool>false</bool>
+   </attribute>
+   <addaction name="actionLinear"/>
+   <addaction name="actionLogarithmic"/>
+  </widget>
+  <widget class="QToolBar" name="aboutBar">
+   <property name="windowTitle">
+    <string>About Tool Bar</string>
+   </property>
+   <attribute name="toolBarArea">
+    <enum>TopToolBarArea</enum>
+   </attribute>
+   <attribute name="toolBarBreak">
+    <bool>false</bool>
+   </attribute>
+   <addaction name="actionAbout"/>
   </widget>
   <action name="actionZoom_In">
    <property name="icon">
