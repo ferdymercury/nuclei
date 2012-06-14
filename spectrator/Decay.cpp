@@ -13,6 +13,7 @@
 #include "GammaTransition.h"
 #include "GraphicsHighlightItem.h"
 #include "ui_Spectrator.h"
+#include "Spectrator.h"
 
 const double Decay::outerGammaMargin = 50.0;
 const double Decay::outerLevelTextMargin = 4.0; // level lines extend beyond the beginning/end of the level texts by this value
@@ -32,7 +33,7 @@ Decay::Decay(Nuclide parentNuclide, Nuclide daughterNuclide, Type decayType, QOb
       parentDecayStartEnergyEv(0),
       normalizeDecIntensToPercentParentDecay(1.0),
       normalizeGammaIntensToPercentParentDecay(1.0),
-      scene(0), ui(0),
+      scene(0), ui(0), main(0),
       pNucBaseLevel(0), pNucStartLevel(0), pNucVerticalArrow(0), pNucHl(0), pNucBaseEnergy(0), pNucEnergy(0), pNucSpin(0),
       firstSelectedGamma(0), secondSelectedGamma(0), selectedEnergyLevel(0)
 {
@@ -268,9 +269,10 @@ QGraphicsScene * Decay::levelPlot()
     return scene;
 }
 
-void Decay::setUpdateableUi(Ui::Spectrator *updui)
+void Decay::setUpdateableUi(Ui::SpectratorMainWindow *updui, Spectrator *mc)
 {
     ui = updui;
+    main = mc;
 }
 
 QString Decay::toText() const
@@ -525,6 +527,8 @@ void Decay::updateDecayDataLabels()
         ui->endEnergy->setText("- keV");
         ui->endSpin->setText("/");
     }
+
+    main->updateDockWidth();
 }
 
 void Decay::alignGraphicsItems()

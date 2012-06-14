@@ -1,6 +1,7 @@
 #include "Spectrator.h"
 #include "ui_Spectrator.h"
 
+#include <QResizeEvent>
 #include <qwt_plot.h>
 #include <qwt_plot_curve.h>
 #include <qwt_plot_grid.h>
@@ -12,15 +13,20 @@
 Q_DECLARE_METATYPE( QSharedPointer<Decay> )
 
 Spectrator::Spectrator(QWidget *parent) :
-    QMainWindow(parent),
-    ui(new Ui::Spectrator),
+    QMainWindow(parent), limitInfoWidth(true),
+    ui(new Ui::SpectratorMainWindow),
     currentMassChain(0)
 {
     ui->setupUi(this);
+    this->setCentralWidget(0);
+    this->tabifyDockWidget(ui->decayCascadeDock, ui->energySpectrumDock);
+    ui->decayCascadeDock->raise();
+    ui->decayInfoDock->installEventFilter(this);
+    ui->anisotropyDock->installEventFilter(this);
 
-    plot = new QwtPlot(ui->energySpectrumTab);
+    plot = new QwtPlot(ui->energySpectrumDock);
     plot->setCanvasBackground(Qt::white);
-    ui->energySpectrumTabLayout->addWidget(plot);
+    ui->energySpectrumLayout->addWidget(plot);
     plot->setAxisTitle(QwtPlot::xBottom, "keV");
     plot->enableAxis(QwtPlot::yLeft, false);
 
@@ -70,6 +76,16 @@ Spectrator::~Spectrator()
     delete ui;
 }
 
+void Spectrator::updateDockWidth()
+{
+    // dock width workaround
+//    limitInfoWidth = false;
+//    ui->decayInfoDock->setMaximumWidth(524287);
+//    ui->anisotropyDock->setMaximumWidth(524287);
+//    QApplication::processEvents();
+//    limitInfoWidth = true;
+}
+
 void Spectrator::selectedA(const QString &a)
 {
     ui->decayListWidget->clear();
@@ -106,7 +122,7 @@ void Spectrator::selectedDecay(QListWidgetItem* newitem, QListWidgetItem*)
         return;
 
     QSharedPointer<Decay> decay = newitem->data(Qt::UserRole).value< QSharedPointer<Decay> >();
-    decay->setUpdateableUi(ui);
+    decay->setUpdateableUi(ui, this);
     QGraphicsScene *scene = decay->levelPlot();
     ui->decayView->setScene(scene);
     ui->decayView->setSceneRect(scene->sceneRect().adjusted(-20, -20, 20, 20));
@@ -158,3 +174,25 @@ void Spectrator::setPlotLog()
 void Spectrator::showAbout()
 {
 }
+
+bool Spectrator::eventFilter(QObject *obj, QEvent *event)
+{
+    if (event->type() != QEvent::Resize)
+        return false;
+
+    ui->decayInfoDock->setMaximumWidth(524287);
+    ui->anisotropyDock->setMaximumWidth(524287);
+
+    // dock width workaround
+    if (limitInfoWidth && ui->decayInfoDock->isVisible()) {
+        int w = qMax(ui->decayInfoDock->minimumWidth(), ui->anisotropyDock->minimumWidth());
+        if (ui->decayInfoDock->isVisible())
+            ui->decayInfoDock->setMaximumWidth(w);
+        if (ui->anisotropyDock->isVisible())
+            ui->anisotropyDock->setMaximumWidth(w);
+        limitInfoWidth = false;
+    }
+
+    return false;
+}
+

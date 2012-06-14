@@ -17,8 +17,9 @@ class QGraphicsSimpleTextItem;
 class ClickableItem;
 class GammaTransition;
 
-namespace Ui {
 class Spectrator;
+namespace Ui {
+class SpectratorMainWindow;
 }
 
 class Decay : public QObject
@@ -40,7 +41,7 @@ public:
 
     QString decayTypeAsText() const;
     QGraphicsScene * levelPlot();
-    void setUpdateableUi(Ui::Spectrator *updui);
+    void setUpdateableUi(Ui::SpectratorMainWindow *updui, Spectrator *mc);
 
     QString toText() const;
 
@@ -72,7 +73,8 @@ private:
     QStringList ensdf;
     mutable QMap<int64_t, EnergyLevel*> levels;
     QGraphicsScene *scene;
-    Ui::Spectrator *ui;
+    Ui::SpectratorMainWindow *ui;
+    Spectrator *main;
 
     // graphics items
     QGraphicsLineItem *pNucBaseLevel, *pNucStartLevel;

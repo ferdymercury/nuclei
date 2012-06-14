@@ -5,7 +5,7 @@
 #include "Decay.h"
 
 namespace Ui {
-class Spectrator;
+class SpectratorMainWindow;
 }
 class ENSDF;
 class QListWidgetItem;
@@ -19,6 +19,8 @@ class Spectrator : public QMainWindow
 public:
     explicit Spectrator(QWidget *parent = 0);
     ~Spectrator();
+
+    void updateDockWidth();
 
 private slots:
     void selectedA(const QString &a);
@@ -36,7 +38,9 @@ private slots:
     void showAbout();
     
 private:
-    Ui::Spectrator *ui;
+    bool eventFilter(QObject *obj, QEvent *event);
+    bool limitInfoWidth;
+    Ui::SpectratorMainWindow *ui;
 
     ENSDF *currentMassChain;
     QList< QSharedPointer<Decay> > decays;
