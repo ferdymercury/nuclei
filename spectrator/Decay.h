@@ -55,6 +55,7 @@ private:
     void clickedGamma(GammaTransition *g);
     void clickedEnergyLevel(EnergyLevel *e);
     void updateDecayDataLabels();
+    void resetAnisotropyLabels();
     void alignGraphicsItems();
     void initializeStyle();
     void processENSDFLevels() const;

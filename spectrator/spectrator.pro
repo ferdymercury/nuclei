@@ -31,6 +31,9 @@ HEADERS  += Spectrator.h \
     GraphicsDropShadowEffect.h \
     ClickableItem.h
 
+INCLUDEPATH += ../../libakk/src
+LIBS += -lakk -L../../libakk
+
 FORMS    += Spectrator.ui
 
 RESOURCES += \

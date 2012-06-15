@@ -8,6 +8,7 @@
 #include <QFontMetrics>
 #include <QVector>
 #include <cmath>
+#include <Akk.h>
 #include "EnergyLevel.h"
 #include "ActiveGraphicsItemGroup.h"
 #include "GammaTransition.h"
@@ -526,6 +527,45 @@ void Decay::updateDecayDataLabels()
         ui->endEnergy->setText("- keV");
         ui->endSpin->setText("/");
     }
+
+    // calculate anisotropies
+    if (pop && depop && selectedEnergyLevel) {
+        if (pop->depopulatedLevel()->spin().isValid() &&
+            depop->populatedLevel()->spin().isValid() &&
+            selectedEnergyLevel->spin().isValid() &&
+            pop->deltaState() == GammaTransition::SignMagnitudeDefined &&
+            depop->deltaState() == GammaTransition::SignMagnitudeDefined
+           ) {
+            Akk calc;
+            calc.setInitialStateSpin(pop->depopulatedLevel()->spin().doubledSpin());
+            calc.setIntermediateStateSpin(selectedEnergyLevel->spin().doubledSpin());
+            calc.setFinalStateSpin(depop->populatedLevel()->spin().doubledSpin());
+            calc.setPopulatingGammaMixing(pop->delta());
+            calc.setDepopulatingGammaMixing(depop->delta());
+
+            ui->a22->setText(QString::number(calc.a22()));
+            ui->a24->setText(QString::number(calc.a24()));
+            ui->a42->setText(QString::number(calc.a42()));
+            ui->a44->setText(QString::number(calc.a44()));
+        }
+        else {
+            resetAnisotropyLabels();
+        }
+    }
+    else {
+        resetAnisotropyLabels();
+    }
+}
+
+void Decay::resetAnisotropyLabels()
+{
+    if (!ui)
+        return;
+
+    ui->a22->setText("-");
+    ui->a24->setText("-");
+    ui->a42->setText("-");
+    ui->a44->setText("-");
 }
 
 void Decay::alignGraphicsItems()

@@ -20,6 +20,7 @@ public:
 
     bool isValid() const;
 
+    int doubledSpin() const;
     QString toString() const;
 
 private:

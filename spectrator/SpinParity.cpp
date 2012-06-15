@@ -41,6 +41,11 @@ bool SpinParity::isValid() const
     return m_valid;
 }
 
+int SpinParity::doubledSpin() const
+{
+    return (denom == 1) ? num * 2 : num;
+}
+
 QString SpinParity::toString() const
 {
     if (!m_valid)
