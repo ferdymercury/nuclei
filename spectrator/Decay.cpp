@@ -292,15 +292,17 @@ QVector<QPointF> Decay::gammaSpectrum(double fwhm) const
     QMap<int64_t, double> gammas;
     foreach (EnergyLevel *level, levels)
         foreach (GammaTransition *g, level->depopulatingTransitions())
-            gammas.insert(g->energyEv(), g->intensity());
+            if (std::isfinite(g->intensity()))
+                gammas.insert(g->energyEv(), g->intensity());
 
     // determine highest energy
     double max = 0.0;
     if (!gammas.isEmpty())
         max = (gammas.end()-1).key();
 
-    // determine sigma
+    // determine sigma @ 662 keV
     double sigma = fwhm / (2.0*sqrt(2.0*M_LN2));
+    double var = sigma * sigma;
 
     // create result vector (on interval [0, max+2*fwhm], stepwidth: 2)
     QVector<QPointF> result((max/1000+1 + qRound(2.0*fwhm))/2+1);
@@ -309,7 +311,8 @@ QVector<QPointF> Decay::gammaSpectrum(double fwhm) const
     for (int i=0; i<result.size(); i++) {
         result[i].setX(double(i*2+1));
         for (QMap<int64_t, double>::const_iterator gamma=gammas.begin(); gamma!=gammas.end(); gamma++) {
-            result[i].ry() += gamma.value() * gauss(result[i].x() - double(gamma.key())/1000.0, sigma);
+            double eGamma = double(gamma.key())/1000.0;
+            result[i].ry() += gamma.value() * gauss(result[i].x() - eGamma, sqrt(eGamma/662.0*var));
         }
     }
 
@@ -529,12 +532,13 @@ void Decay::updateDecayDataLabels()
     }
 
     // calculate anisotropies
+    /// \todo Special treatment for unknown Delta sign should be implemented!
     if (pop && depop && selectedEnergyLevel) {
         if (pop->depopulatedLevel()->spin().isValid() &&
             depop->populatedLevel()->spin().isValid() &&
             selectedEnergyLevel->spin().isValid() &&
-            pop->deltaState() == GammaTransition::SignMagnitudeDefined &&
-            depop->deltaState() == GammaTransition::SignMagnitudeDefined
+            pop->deltaState() & GammaTransition::SignMagnitudeDefined &&
+            depop->deltaState() & GammaTransition::SignMagnitudeDefined
            ) {
             Akk calc;
             calc.setInitialStateSpin(pop->depopulatedLevel()->spin().doubledSpin());

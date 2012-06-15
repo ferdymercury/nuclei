@@ -13,6 +13,10 @@
   <property name="windowTitle">
    <string>Spectrator</string>
   </property>
+  <property name="windowIcon">
+   <iconset resource="spectrator.qrc">
+    <normaloff>:/spectrator.png</normaloff>:/spectrator.png</iconset>
+  </property>
   <property name="dockNestingEnabled">
    <bool>true</bool>
   </property>
@@ -603,6 +607,9 @@
      </item>
      <item row="1" column="1">
       <widget class="QLabel" name="a22">
+       <property name="toolTip">
+        <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;A&lt;span style=&quot; vertical-align:sub;&quot;&gt;22&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+       </property>
        <property name="text">
         <string>-</string>
        </property>
@@ -617,6 +624,9 @@
      </item>
      <item row="2" column="1">
       <widget class="QLabel" name="a24">
+       <property name="toolTip">
+        <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;A&lt;span style=&quot; vertical-align:sub;&quot;&gt;24&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+       </property>
        <property name="text">
         <string>-</string>
        </property>
@@ -631,6 +641,9 @@
      </item>
      <item row="3" column="1">
       <widget class="QLabel" name="a42">
+       <property name="toolTip">
+        <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;A&lt;span style=&quot; vertical-align:sub;&quot;&gt;42&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+       </property>
        <property name="text">
         <string>-</string>
        </property>
@@ -645,6 +658,9 @@
      </item>
      <item row="4" column="1">
       <widget class="QLabel" name="a44">
+       <property name="toolTip">
+        <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;A&lt;span style=&quot; vertical-align:sub;&quot;&gt;44&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+       </property>
        <property name="text">
         <string>-</string>
        </property>

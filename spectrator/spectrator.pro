@@ -29,7 +29,8 @@ HEADERS  += Spectrator.h \
     ActiveGraphicsItemGroup.h \
     GraphicsHighlightItem.h \
     GraphicsDropShadowEffect.h \
-    ClickableItem.h
+    ClickableItem.h \
+    version.h
 
 INCLUDEPATH += ../../libakk/src
 LIBS += -lakk -L../../libakk
@@ -38,6 +39,8 @@ FORMS    += Spectrator.ui
 
 RESOURCES += \
     spectrator.qrc
+
+RC_FILE = spectrapac.rc
 
 # QWT ####################
 

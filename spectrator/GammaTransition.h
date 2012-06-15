@@ -19,9 +19,10 @@ class GammaTransition : public ClickableItem
 {
 public:
     enum DeltaState {
-        SignMagnitudeDefined,
-        MagnitudeDefined,
-        UnknownDelta
+        UnknownDelta = 0x0,
+        MagnitudeDefined = 0x1,
+        SignDefined = 0x2,
+        SignMagnitudeDefined = 0x3
     };
 
     GammaTransition(int64_t energyEV, double intensity,

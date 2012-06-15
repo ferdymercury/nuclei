@@ -3,6 +3,7 @@
 
 #include <QResizeEvent>
 #include <QDoubleSpinBox>
+#include <QMessageBox>
 #include <qwt_plot.h>
 #include <qwt_plot_curve.h>
 #include <qwt_plot_grid.h>
@@ -12,6 +13,7 @@
 #include <qwt_series_data.h>
 #include <qwt_scale_engine.h>
 #include <qwt_text.h>
+#include "version.h"
 
 #include "ENSDF.h"
 
@@ -37,6 +39,7 @@ Spectrator::Spectrator(QWidget *parent) :
     currentMassChain(0), zoomer(0)
 {
     ui->setupUi(this);
+    setWindowTitle(QCoreApplication::applicationName() + QString(" ") + QCoreApplication::applicationVersion());
     setCentralWidget(0);
     tabifyDockWidget(ui->decayCascadeDock, ui->energySpectrumDock);
     setTabPosition(Qt::LeftDockWidgetArea, QTabWidget::North);
@@ -287,6 +290,10 @@ void Spectrator::setPlotLog()
 
 void Spectrator::showAbout()
 {
+    QMessageBox::about(this,
+                       tr("About: ") + QCoreApplication::applicationName() + QString(" ") + QCoreApplication::applicationVersion(),
+                       QString::fromUtf8(SPECTRATORABOUT "<hr />" LIBAKKABOUT "<hr />" GPL)
+                       );
 }
 
 void Spectrator::resizeEvent(QResizeEvent *)
