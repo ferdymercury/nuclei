@@ -40,8 +40,6 @@ FORMS    += Spectrator.ui
 RESOURCES += \
     spectrator.qrc
 
-RC_FILE = spectrapac.rc
-
 # QWT ####################
 
 CONFIG += qwt
@@ -61,7 +59,10 @@ exists( /usr/include/qwt-qt4/qwt.h ) {
   LIBS += -lqwt-qt4
 }
 
-exists( C://qwt//include//qwt.h ) {
-  INCLUDEPATH += C://qwt//include
-  LIBS += -LC://qwt//lib -lqwt6
+exists( C://build//qwt//src//qwt.h ) {
+  INCLUDEPATH += C://build//qwt//src
+  LIBS += -LC://build//qwt//lib -lqwt
 }
+
+RC_FILE = spectrator.rc
+

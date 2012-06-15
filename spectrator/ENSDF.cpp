@@ -6,7 +6,7 @@
 #include <QLocale>
 #include "Decay.h"
 
-QString ENSDF::path = "../ensdf";
+QString ENSDF::path = "./ensdf";
 
 QStringList ENSDF::name() const
 {
