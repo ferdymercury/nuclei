@@ -17,8 +17,6 @@ public:
     QList< QSharedPointer<Decay> > decays(const QString &daughterNuclide) const;
 
 private:
-    static QString path;
-
     const int a;
     QStringList daughternuclides;
 

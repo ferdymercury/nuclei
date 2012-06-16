@@ -1,4 +1,4 @@
-QT       += core gui
+QT       += core gui network
 
 TARGET = spectrator
 TEMPLATE = app
@@ -17,7 +17,8 @@ SOURCES += main.cpp\
     GraphicsHighlightItem.cpp \
     GraphicsDropShadowEffect.cpp \
     ClickableItem.cpp \
-    qxtgroupbox.cpp
+    qxtgroupbox.cpp \
+    ENSDFDownloader.cpp
 
 HEADERS  += Spectrator.h \
     ENSDF.h \
@@ -32,12 +33,16 @@ HEADERS  += Spectrator.h \
     GraphicsDropShadowEffect.h \
     ClickableItem.h \
     version.h \
-    qxtgroupbox.h
+    qxtgroupbox.h \
+    ENSDFDownloader.h
 
 INCLUDEPATH += ../../libakk/src
 LIBS += -lakk -L../../libakk
+LIBS += -lquazip
 
-FORMS    += Spectrator.ui
+FORMS    += Spectrator.ui \
+    ENSDFDownloader.ui \
+    ENSDFDownloaderSettings.ui
 
 RESOURCES += \
     spectrator.qrc

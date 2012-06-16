@@ -5,6 +5,7 @@
 #include <QDoubleSpinBox>
 #include <QMessageBox>
 #include <QSettings>
+#include <QTimer>
 #include <qwt_plot.h>
 #include <qwt_plot_curve.h>
 #include <qwt_plot_grid.h>
@@ -17,6 +18,7 @@
 #include "version.h"
 
 #include "ENSDF.h"
+#include "ENSDFDownloader.h"
 
 Q_DECLARE_METATYPE( QSharedPointer<Decay> )
 
@@ -81,8 +83,6 @@ Spectrator::Spectrator(QWidget *parent) :
     curve->setBrush(QBrush(QColor(64, 166, 255)));
     curve->setRenderHint(QwtPlotItem::RenderAntialiased, true);
 
-    ui->aListWidget->addItems(ENSDF::aValues());
-
     connect(ui->aListWidget, SIGNAL(currentTextChanged(QString)), this, SLOT(selectedA(QString)));
     connect(ui->nuclideListWidget, SIGNAL(currentTextChanged(QString)), this, SLOT(selectedNuclide(QString)));
     connect(ui->decayListWidget, SIGNAL(currentItemChanged(QListWidgetItem*,QListWidgetItem*)), this, SLOT(selectedDecay(QListWidgetItem*,QListWidgetItem*)));
@@ -99,29 +99,8 @@ Spectrator::Spectrator(QWidget *parent) :
 
     ui->decayView->setRenderHints(QPainter::Antialiasing | QPainter::TextAntialiasing);
 
-    // reload selection
-    QSettings s;
-
-    eres->setValue(s.value("fwhmResolution", 5.0).toDouble());
-
-    if (s.value("energyScale", "lin").toString() == "log")
-        ui->actionLogarithmic->trigger();
-
-    QString selectedA(s.value("selectedA").toString());
-    QList<QListWidgetItem *> aItems(ui->aListWidget->findItems(selectedA, Qt::MatchExactly));
-    if (!aItems.isEmpty())
-        ui->aListWidget->setCurrentItem(aItems.at(0));
-
-    QString selectedNuclide(s.value("selectedNuclide").toString());
-    QList<QListWidgetItem *> nuclideItems(ui->nuclideListWidget->findItems(selectedNuclide, Qt::MatchExactly));
-    if (!nuclideItems.isEmpty())
-        ui->nuclideListWidget->setCurrentItem(nuclideItems.at(0));
-
-    QString selectedDecay(s.value("selectedDecay").toString());
-    QList<QListWidgetItem *> decayItems(ui->decayListWidget->findItems(selectedDecay, Qt::MatchExactly));
-    if (!decayItems.isEmpty())
-        ui->decayListWidget->setCurrentItem(decayItems.at(0));
-
+    // separate init from constructor to avoid crash on cancel
+    QTimer::singleShot(0, this, SLOT(initialize()));
 }
 
 Spectrator::~Spectrator()
@@ -145,6 +124,46 @@ Spectrator::~Spectrator()
         s.setValue("selectedDecay", decayItem->text());
 
     delete ui;
+}
+
+void Spectrator::initialize()
+{
+    // load available mass numbers (i.e. search for available ENSDF files)
+    QStringList a(ENSDF::aValues());
+    while (a.isEmpty()) {
+        ENSDFDownloader downloader(this);
+        if (downloader.exec() != QDialog::Accepted) {
+            qApp->quit();
+            return;
+        }
+
+        a = ENSDF::aValues();
+    }
+    ui->aListWidget->addItems(a);
+
+    // restore last session
+    QSettings s;
+
+    eres->setValue(s.value("fwhmResolution", 5.0).toDouble());
+
+    if (s.value("energyScale", "lin").toString() == "log")
+        ui->actionLogarithmic->trigger();
+
+    QString selectedA(s.value("selectedA").toString());
+    QList<QListWidgetItem *> aItems(ui->aListWidget->findItems(selectedA, Qt::MatchExactly));
+    if (!aItems.isEmpty())
+        ui->aListWidget->setCurrentItem(aItems.at(0));
+
+    QString selectedNuclide(s.value("selectedNuclide").toString());
+    QList<QListWidgetItem *> nuclideItems(ui->nuclideListWidget->findItems(selectedNuclide, Qt::MatchExactly));
+    if (!nuclideItems.isEmpty())
+        ui->nuclideListWidget->setCurrentItem(nuclideItems.at(0));
+
+    QString selectedDecay(s.value("selectedDecay").toString());
+    QList<QListWidgetItem *> decayItems(ui->decayListWidget->findItems(selectedDecay, Qt::MatchExactly));
+    if (!decayItems.isEmpty())
+        ui->decayListWidget->setCurrentItem(decayItems.at(0));
+
 }
 
 void Spectrator::selectedA(const QString &a)

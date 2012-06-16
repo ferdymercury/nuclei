@@ -4,9 +4,8 @@
 #include <QChar>
 #include <QMap>
 #include <QLocale>
+#include <QSettings>
 #include "Decay.h"
-
-QString ENSDF::path = "./ensdf";
 
 QStringList ENSDF::name() const
 {
@@ -16,8 +15,9 @@ QStringList ENSDF::name() const
 ENSDF::ENSDF(int A)
     : a(A)
 {
+    QSettings s;
     // read data
-    QFile f(path + QString("/ensdf.%1").arg(A, int(3), int(10), QChar('0')));
+            QFile f(s.value("ensdfPath", ".").toString() + QString("/ensdf.%1").arg(A, int(3), int(10), QChar('0')));
     f.open(QIODevice::ReadOnly | QIODevice::Text);
     QString c = QString::fromUtf8(f.readAll());
 
@@ -26,9 +26,13 @@ ENSDF::ENSDF(int A)
 
 }
 
-QStringList ENSDF::aValues()
+QStringList ENSDF::aValues() // static
 {
-    QDir dir(path);
+    QSettings s;
+    if (!s.contains("ensdfPath"))
+        return QStringList();
+
+    QDir dir(s.value("ensdfPath").toString());
     if (!dir.exists())
         return QStringList();
 

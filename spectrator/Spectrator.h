@@ -23,6 +23,8 @@ public:
     ~Spectrator();
 
 private slots:
+    void initialize();
+
     void selectedA(const QString &a);
     void selectedNuclide(const QString &nuclide);
     void selectedDecay(QListWidgetItem* newitem, QListWidgetItem*);

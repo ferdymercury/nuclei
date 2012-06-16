@@ -6,5 +6,8 @@
         <file>zoom-out.png</file>
         <file>help-about.png</file>
         <file>spectrator.png</file>
+        <file>download.png</file>
+        <file>configure.png</file>
+        <file>document-open-folder.png</file>
     </qresource>
 </RCC>
