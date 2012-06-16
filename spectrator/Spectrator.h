@@ -38,15 +38,8 @@ private slots:
     void setPlotLog();
 
     void showAbout();
-
-protected:
-    virtual void resizeEvent(QResizeEvent *event); // workaround
     
 private:
-    bool eventFilter(QObject *obj, QEvent *event); // workaround
-    void resizeDockHelper(); // workaround
-    bool avoidInfoDockResizeRecursion, avoidAnisotropDockResizeRecursion; // workaround
-
     Ui::SpectratorMainWindow *ui;
 
     ENSDF *currentMassChain;

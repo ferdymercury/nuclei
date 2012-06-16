@@ -16,7 +16,8 @@ SOURCES += main.cpp\
     ActiveGraphicsItemGroup.cpp \
     GraphicsHighlightItem.cpp \
     GraphicsDropShadowEffect.cpp \
-    ClickableItem.cpp
+    ClickableItem.cpp \
+    qxtgroupbox.cpp
 
 HEADERS  += Spectrator.h \
     ENSDF.h \
@@ -30,7 +31,8 @@ HEADERS  += Spectrator.h \
     GraphicsHighlightItem.h \
     GraphicsDropShadowEffect.h \
     ClickableItem.h \
-    version.h
+    version.h \
+    qxtgroupbox.h
 
 INCLUDEPATH += ../../libakk/src
 LIBS += -lakk -L../../libakk

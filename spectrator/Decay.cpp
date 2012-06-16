@@ -585,10 +585,10 @@ void Decay::updateDecayDataLabels()
                 a44.append(QString("%1%2").arg(prfx).arg(calc.a44()));
             }
 
-            ui->a22->setText(a22.join("\n"));
-            ui->a24->setText(a24.join("\n"));
-            ui->a42->setText(a42.join("\n"));
-            ui->a44->setText(a44.join("\n"));
+            ui->a22->setText(a22.join(", "));
+            ui->a24->setText(a24.join(", "));
+            ui->a42->setText(a42.join(", "));
+            ui->a44->setText(a44.join(", "));
         }
         else {
             resetAnisotropyLabels();

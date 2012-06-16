@@ -35,16 +35,12 @@ protected:
 };
 
 Spectrator::Spectrator(QWidget *parent) :
-    QMainWindow(parent), avoidInfoDockResizeRecursion(false), avoidAnisotropDockResizeRecursion(false),
+    QMainWindow(parent),
     ui(new Ui::SpectratorMainWindow),
     currentMassChain(0), zoomer(0)
 {
     ui->setupUi(this);
     setWindowTitle(QCoreApplication::applicationName() + QString(" ") + QCoreApplication::applicationVersion());
-    setCentralWidget(0);
-    tabifyDockWidget(ui->decayCascadeDock, ui->energySpectrumDock);
-    setTabPosition(Qt::LeftDockWidgetArea, QTabWidget::North);
-    ui->decayCascadeDock->raise();
 
     // add toolbar widgets
     eres = new QDoubleSpinBox(ui->mainToolBar);
@@ -55,11 +51,7 @@ Spectrator::Spectrator(QWidget *parent) :
     connect(eres, SIGNAL(valueChanged(double)), this, SLOT(updateEnergySpectrum()));
     ui->energySpectrumBar->addWidget(eres);
 
-    // workaround
-    ui->decayInfoDock->installEventFilter(this);
-    ui->anisotropyDock->installEventFilter(this);
-
-    plot = new QwtPlot(ui->energySpectrumDock);
+    plot = new QwtPlot(ui->energySpectrumTab);
     plot->setCanvasBackground(Qt::white);
     ui->energySpectrumLayout->addWidget(plot);
     plot->setAxisTitle(QwtPlot::xBottom, "keV");
@@ -91,10 +83,6 @@ Spectrator::Spectrator(QWidget *parent) :
 
     ui->aListWidget->addItems(ENSDF::aValues());
 
-    QFont dockfont = ui->decayCascadeDock->font();
-    dockfont.setPointSize(dockfont.pointSize() - 1);
-    ui->decayCascadeDock->setFont(dockfont);
-
     connect(ui->aListWidget, SIGNAL(currentTextChanged(QString)), this, SLOT(selectedA(QString)));
     connect(ui->nuclideListWidget, SIGNAL(currentTextChanged(QString)), this, SLOT(selectedNuclide(QString)));
     connect(ui->decayListWidget, SIGNAL(currentItemChanged(QListWidgetItem*,QListWidgetItem*)), this, SLOT(selectedDecay(QListWidgetItem*,QListWidgetItem*)));
@@ -110,9 +98,6 @@ Spectrator::Spectrator(QWidget *parent) :
     connect(ui->actionAbout, SIGNAL(triggered()), this, SLOT(showAbout()));
 
     ui->decayView->setRenderHints(QPainter::Antialiasing | QPainter::TextAntialiasing);
-
-    // workaround
-    resizeDockHelper();
 
     // reload selection
     QSettings s;
@@ -224,26 +209,16 @@ void Spectrator::updateEnergySpectrum()
 
 void Spectrator::showAll()
 {
-    // funny workaround from http://qt-project.org/faq/answer/how_can_i_check_which_tab_is_the_current_one_in_a_tabbed_qdockwidget
-    QList<QTabBar *> tabList = findChildren<QTabBar *>();
-    if(!tabList.isEmpty()){
-        QTabBar *tabBar = tabList.at(0);
-        if (tabBar->currentIndex() == 0) {
-            QGraphicsScene *scene = ui->decayView->scene();
-            if (scene)
-                ui->decayView->fitInView(scene->sceneRect(), Qt::KeepAspectRatio);
-            return;
-        }
-        else if (tabBar->currentIndex() == 1) {
-            zoomer->zoom(0);
-            return;
-        }
+    if (ui->tabWidget->currentWidget() == ui->decayCascadeTab) {
+        QGraphicsScene *scene = ui->decayView->scene();
+        if (scene)
+            ui->decayView->fitInView(scene->sceneRect(), Qt::KeepAspectRatio);
+        return;
     }
-
-    QGraphicsScene *scene = ui->decayView->scene();
-    if (scene)
-        ui->decayView->fitInView(scene->sceneRect(), Qt::KeepAspectRatio);
-    zoomer->zoom(0);
+    else {
+        zoomer->zoom(0);
+        return;
+    }
 }
 
 void Spectrator::showOriginalSize()
@@ -253,58 +228,29 @@ void Spectrator::showOriginalSize()
 
 void Spectrator::zoomIn()
 {
-    // funny workaround from http://qt-project.org/faq/answer/how_can_i_check_which_tab_is_the_current_one_in_a_tabbed_qdockwidget
-    QList<QTabBar *> tabList = findChildren<QTabBar *>();
-    if(!tabList.isEmpty()){
-        QTabBar *tabBar = tabList.at(0);
-        if (tabBar->currentIndex() == 0) {
-            ui->decayView->scale(1.25, 1.25);
-            return;
-        }
-        else if (tabBar->currentIndex() == 1) {
-            if ((zoomer->zoomRectIndex() + 1) >= zoomer->zoomStack().size()) {
-                const QwtScaleDiv *xs = plot->axisScaleDiv(QwtPlot::xBottom);
-                const QwtScaleDiv *ys = plot->axisScaleDiv(QwtPlot::yLeft);
-                QRectF cr(xs->lowerBound(), ys->lowerBound(), xs->range(), ys->range());
-                cr = cr.normalized();
-                zoomer->zoom(QRectF(cr.left()+0.1*cr.width(), cr.top()+0.1*cr.height(), 0.8*cr.width(), 0.8*cr.height()));
-            }
-            else {
-                zoomer->zoom(1);
-            }
-            return;
-        }
-    }
-    ui->decayView->scale(1.25, 1.25);
-    if ((zoomer->zoomRectIndex() + 1) >= zoomer->zoomStack().size()) {
-        const QwtScaleDiv *xs = plot->axisScaleDiv(QwtPlot::xBottom);
-        const QwtScaleDiv *ys = plot->axisScaleDiv(QwtPlot::yLeft);
-        QRectF cr(xs->lowerBound(), ys->lowerBound(), xs->range(), ys->range());
-        cr = cr.normalized();
-        zoomer->zoom(QRectF(cr.left()+0.1*cr.width(), cr.top()+0.1*cr.height(), 0.8*cr.width(), 0.8*cr.height()));
+    if (ui->tabWidget->currentWidget() == ui->decayCascadeTab) {
+        ui->decayView->scale(1.25, 1.25);
     }
     else {
-        zoomer->zoom(1);
+        if ((zoomer->zoomRectIndex() + 1) >= zoomer->zoomStack().size()) {
+            const QwtScaleDiv *xs = plot->axisScaleDiv(QwtPlot::xBottom);
+            const QwtScaleDiv *ys = plot->axisScaleDiv(QwtPlot::yLeft);
+            QRectF cr(xs->lowerBound(), ys->lowerBound(), xs->range(), ys->range());
+            cr = cr.normalized();
+            zoomer->zoom(QRectF(cr.left()+0.1*cr.width(), cr.top()+0.1*cr.height(), 0.8*cr.width(), 0.8*cr.height()));
+        }
+        else {
+            zoomer->zoom(1);
+        }
     }
 }
 
 void Spectrator::zoomOut()
 {
-    // funny workaround from http://qt-project.org/faq/answer/how_can_i_check_which_tab_is_the_current_one_in_a_tabbed_qdockwidget
-    QList<QTabBar *> tabList = findChildren<QTabBar *>();
-    if(!tabList.isEmpty()){
-        QTabBar *tabBar = tabList.at(0);
-        if (tabBar->currentIndex() == 0) {
-            ui->decayView->scale(0.8, 0.8);
-            return;
-        }
-        else if (tabBar->currentIndex() == 1) {
-            zoomer->zoom(-1);
-            return;
-        }
-    }
-    ui->decayView->scale(0.8, 0.8);
-    zoomer->zoom(-1);
+    if (ui->tabWidget->currentWidget() == ui->decayCascadeTab)
+        ui->decayView->scale(0.8, 0.8);
+    else
+        zoomer->zoom(-1);
 }
 
 void Spectrator::setPlotLin()
@@ -314,6 +260,7 @@ void Spectrator::setPlotLin()
     plot->setAxisAutoScale(QwtPlot::yLeft);
     plot->setAxisScaleEngine(QwtPlot::yLeft, new QwtLinearScaleEngine);
     zoomer->setZoomBase();
+    ui->tabWidget->setCurrentWidget(ui->energySpectrumTab);
 }
 
 void Spectrator::setPlotLog()
@@ -323,6 +270,7 @@ void Spectrator::setPlotLog()
     plot->setAxisScaleEngine(QwtPlot::yLeft, new QwtLog10ScaleEngine);
     plot->setAxisScale(QwtPlot::yLeft, 1E-8, 10.0);
     zoomer->setZoomBase();
+    ui->tabWidget->setCurrentWidget(ui->energySpectrumTab);
 }
 
 void Spectrator::showAbout()
@@ -332,55 +280,3 @@ void Spectrator::showAbout()
                        QString::fromUtf8(SPECTRATORABOUT "<hr />" LIBAKKABOUT "<hr />" GPL)
                        );
 }
-
-void Spectrator::resizeEvent(QResizeEvent *)
-{
-    resizeDockHelper();
-}
-
-void Spectrator::resizeDockHelper()
-{
-    int w = 0;
-    if (!ui->decayInfoDock->isFloating())
-        w = ui->decayInfoDock->minimumWidth();
-    if (!ui->anisotropyDock->isFloating())
-        w = qMax(w, ui->anisotropyDock->minimumWidth());
-
-    if (!avoidInfoDockResizeRecursion && ui->decayInfoDock->isVisible() && !ui->decayInfoDock->isFloating()) {
-        avoidInfoDockResizeRecursion = true;
-        setAnimated(false);
-        if (ui->decayInfoDock->isVisible())
-            ui->decayInfoDock->setMaximumWidth(w);
-
-        QApplication::sendPostedEvents();
-        QApplication::flush();
-
-        ui->decayInfoDock->setMaximumWidth(524287);
-        setAnimated(true);
-        avoidInfoDockResizeRecursion = false;
-    }
-    if (!avoidAnisotropDockResizeRecursion && ui->anisotropyDock->isVisible() && !ui->anisotropyDock->isFloating()) {
-        avoidAnisotropDockResizeRecursion = true;
-        setAnimated(false);
-        if (ui->anisotropyDock->isVisible())
-            ui->anisotropyDock->setMaximumWidth(w);
-
-        QApplication::sendPostedEvents();
-        QApplication::flush();
-
-        ui->anisotropyDock->setMaximumWidth(524287);
-        setAnimated(true);
-        avoidAnisotropDockResizeRecursion = false;
-    }
-}
-
-bool Spectrator::eventFilter(QObject *, QEvent *event)
-{
-    if (event->type() != QEvent::Show)
-        return false;
-
-    resizeDockHelper();
-
-    return false;
-}
-
