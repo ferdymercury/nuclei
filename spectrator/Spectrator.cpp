@@ -4,6 +4,7 @@
 #include <QResizeEvent>
 #include <QDoubleSpinBox>
 #include <QMessageBox>
+#include <QSettings>
 #include <qwt_plot.h>
 #include <qwt_plot_curve.h>
 #include <qwt_plot_grid.h>
@@ -48,7 +49,6 @@ Spectrator::Spectrator(QWidget *parent) :
     // add toolbar widgets
     eres = new QDoubleSpinBox(ui->mainToolBar);
     eres->setSuffix(" %");
-    eres->setValue(5.0);
     eres->setRange(0.1, 100.0);
     eres->setSingleStep(0.2);
     eres->setToolTip("Energy resolution: FWHM in % at 662 keV");
@@ -90,11 +90,6 @@ Spectrator::Spectrator(QWidget *parent) :
     curve->setRenderHint(QwtPlotItem::RenderAntialiased, true);
 
     ui->aListWidget->addItems(ENSDF::aValues());
-    if (ui->aListWidget->count()) {
-        // initialize selection
-        ui->aListWidget->setCurrentRow(168);
-        selectedA(ui->aListWidget->item(168)->text());
-    }
 
     QFont dockfont = ui->decayCascadeDock->font();
     dockfont.setPointSize(dockfont.pointSize() - 1);
@@ -118,10 +113,52 @@ Spectrator::Spectrator(QWidget *parent) :
 
     // workaround
     resizeDockHelper();
+
+    // reload selection
+    QSettings s;
+
+    eres->setValue(s.value("fwhmResolution", 5.0).toDouble());
+
+    if (s.value("energyScale", "lin").toString() == "log")
+        ui->actionLogarithmic->trigger();
+
+    QString selectedA(s.value("selectedA").toString());
+    QList<QListWidgetItem *> aItems(ui->aListWidget->findItems(selectedA, Qt::MatchExactly));
+    if (!aItems.isEmpty())
+        ui->aListWidget->setCurrentItem(aItems.at(0));
+
+    QString selectedNuclide(s.value("selectedNuclide").toString());
+    QList<QListWidgetItem *> nuclideItems(ui->nuclideListWidget->findItems(selectedNuclide, Qt::MatchExactly));
+    if (!nuclideItems.isEmpty())
+        ui->nuclideListWidget->setCurrentItem(nuclideItems.at(0));
+
+    QString selectedDecay(s.value("selectedDecay").toString());
+    QList<QListWidgetItem *> decayItems(ui->decayListWidget->findItems(selectedDecay, Qt::MatchExactly));
+    if (!decayItems.isEmpty())
+        ui->decayListWidget->setCurrentItem(decayItems.at(0));
+
 }
 
 Spectrator::~Spectrator()
 {
+    QSettings s;
+
+    s.setValue("energyScale", ui->actionLinear->isChecked() ? "lin" : "log");
+
+    s.setValue("fwhmResolution", eres->value());
+
+    QListWidgetItem *aItem = ui->aListWidget->currentItem();
+    if (aItem)
+        s.setValue("selectedA", aItem->text());
+
+    QListWidgetItem *nuclideItem = ui->nuclideListWidget->currentItem();
+    if (nuclideItem)
+        s.setValue("selectedNuclide", nuclideItem->text());
+
+    QListWidgetItem *decayItem = ui->decayListWidget->currentItem();
+    if (decayItem)
+        s.setValue("selectedDecay", decayItem->text());
+
     delete ui;
 }
 

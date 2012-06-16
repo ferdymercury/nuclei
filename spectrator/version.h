@@ -1,7 +1,7 @@
 #ifndef VERSION_H
 #define VERSION_H
 
-#define VERSION 0.9
+#define VERSION "1.0"
 
 #define SPECTRATORABOUT "\
 <p><b>Spectrator</b></p><p>shows decay schemes, computes anisotropies of decay cascades and \

@@ -532,7 +532,6 @@ void Decay::updateDecayDataLabels()
     }
 
     // calculate anisotropies
-    /// \todo Special treatment for unknown Delta sign should be implemented!
     if (pop && depop && selectedEnergyLevel) {
         if (pop->depopulatedLevel()->spin().isValid() &&
             depop->populatedLevel()->spin().isValid() &&
@@ -540,17 +539,56 @@ void Decay::updateDecayDataLabels()
             pop->deltaState() & GammaTransition::SignMagnitudeDefined &&
             depop->deltaState() & GammaTransition::SignMagnitudeDefined
            ) {
+            // create list of sign combinations
+            typedef QPair<double, double> SignCombination;
+            QList< SignCombination > variants;
+            QList< double > popvariants;
+            if (pop->deltaState() == GammaTransition::MagnitudeDefined)
+                popvariants << 1. << -1.;
+            else
+                popvariants << ((pop->delta() < 0.0) ? -1. : 1.);
+            foreach (double popvariant, popvariants) {
+                if (depop->deltaState() == GammaTransition::MagnitudeDefined)
+                    variants << QPair<double, double>(popvariant, 1.) << SignCombination(popvariant, -1.);
+                else
+                    variants << SignCombination(popvariant, (depop->delta() < 0.0) ? -1. : 1.);
+            }
+
+            // compute possible results
+            QStringList a22, a24, a42, a44;
             Akk calc;
             calc.setInitialStateSpin(pop->depopulatedLevel()->spin().doubledSpin());
             calc.setIntermediateStateSpin(selectedEnergyLevel->spin().doubledSpin());
             calc.setFinalStateSpin(depop->populatedLevel()->spin().doubledSpin());
-            calc.setPopulatingGammaMixing(pop->delta());
-            calc.setDepopulatingGammaMixing(depop->delta());
 
-            ui->a22->setText(QString::number(calc.a22()));
-            ui->a24->setText(QString::number(calc.a24()));
-            ui->a42->setText(QString::number(calc.a42()));
-            ui->a44->setText(QString::number(calc.a44()));
+            foreach (SignCombination variant, variants) {
+                double popdelta = pop->delta();
+                double depopdelta = depop->delta();
+                if (pop->deltaState() == GammaTransition::MagnitudeDefined)
+                    popdelta *= variant.first;
+                if (depop->deltaState() == GammaTransition::MagnitudeDefined)
+                    depopdelta *= variant.second;
+
+                calc.setPopulatingGammaMixing(popdelta);
+                calc.setDepopulatingGammaMixing(depopdelta);
+
+                // determine prefix
+                QString prfx;
+                if (variants.size() > 1) {
+                    prfx = "%1: ";
+                    prfx = prfx.arg(QString(variant.first < 0 ? "-" : "+") + QString(variant.second < 0 ? "-" : "+"));
+                }
+
+                a22.append(QString("%1%2").arg(prfx).arg(calc.a22()));
+                a24.append(QString("%1%2").arg(prfx).arg(calc.a24()));
+                a42.append(QString("%1%2").arg(prfx).arg(calc.a42()));
+                a44.append(QString("%1%2").arg(prfx).arg(calc.a44()));
+            }
+
+            ui->a22->setText(a22.join("\n"));
+            ui->a24->setText(a24.join("\n"));
+            ui->a42->setText(a42.join("\n"));
+            ui->a44->setText(a44.join("\n"));
         }
         else {
             resetAnisotropyLabels();
