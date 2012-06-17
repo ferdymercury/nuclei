@@ -675,6 +675,8 @@ void Decay::alignGraphicsItems()
                 gammaspace += gamma->minimalXDistance();
         }
     }
+    if (!std::isfinite(gammaspace))
+        gammaspace = 0.0;
 
     // set gamma positions
     double currentgammapos = 0.5*gammaspace;
