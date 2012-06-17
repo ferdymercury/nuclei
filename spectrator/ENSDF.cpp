@@ -65,11 +65,14 @@ QList< QSharedPointer<Decay> > ENSDF::decays(const QString &daughterNuclide) con
         return QList< QSharedPointer<Decay> >();
     QString nucid(parts.at(1).rightJustified(3, ' '));
     nucid.append(parts.at(0).toUpper().leftJustified(2, ' '));
+    nucid.replace(' ', "\\s");
 
     QList< QSharedPointer<Decay> > result;
     int start = -1;
     int stop = 0;
-    while ((start = contents.indexOf(QRegExp("^" + nucid + "\\s{4,4}[\\s0-9]{3,3}[\\sA-Z]{2,2}\\s(B-|B\\+|EC|IT|A\\s)\\sDECAY.*"), stop)), start >= 0) {
+    QString restr("^" + nucid + "\\s{4,4}[0-9]{1,3}[\\sA-Z]{2,2}\\s(B-|B\\+|EC|IT|A\\s)\\sDECAY.*");
+    QRegExp re(restr);
+    while ((start = contents.indexOf(re, stop)), start >= 0) {
         stop = contents.indexOf(QRegExp("^\\s*$"), start);
         if (stop < 0)
             stop = contents.size();

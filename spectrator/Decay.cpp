@@ -57,7 +57,7 @@ Decay::Decay(const QStringList &ensdfData, QObject *parent)
     // parse header
     const QString &head = ensdf.at(0);
     // set type
-    QString type(head.mid(15, 2));
+    QString type(head.mid(head.indexOf("DECAY")-3, 2));
     if (type == "EC")
         t = ElectronCapture;
     else if (type == "B+")
@@ -73,9 +73,13 @@ Decay::Decay(const QStringList &ensdfData, QObject *parent)
     dNuc = d;
     // parse information from parent record
     HalfLife hl;
-    int pidx = ensdf.indexOf(QRegExp("^" + head.mid(9, 5) + "\\s\\sP\\s.*$"));
+    QString pa, pn;
+    int pidx = ensdf.indexOf(QRegExp("^[\\s0-9A-Z]{5,5}\\s\\sP\\s.*$"));
     if (pidx > 0) {
         QString prec(ensdf.at(pidx));
+        // determine parent data
+        pa = prec.left(3).trimmed();
+        pn = prec.mid(3, 2).trimmed();
 
         // determine parent's half-life
         hl = HalfLife(prec.mid(39, 10));
@@ -88,7 +92,7 @@ Decay::Decay(const QStringList &ensdfData, QObject *parent)
         parentDecayStartSpin = SpinParity(prec.mid(21, 18));
     }
     // create parent nuclide
-    Nuclide p(head.mid(9, 3).trimmed().toUInt(), head.mid(12, 2).trimmed(), hl);
+    Nuclide p(pa.toUInt(), pn, hl);
 
     pNuc = p;
 }
