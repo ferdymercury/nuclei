@@ -29,6 +29,9 @@ public:
 signals:
     void clicked(ClickableItem *item);
 
+public slots:
+    void setShadowEnabled(bool enable);
+
 protected:
     virtual void hoverEnterEvent(QGraphicsSceneHoverEvent * event);
     virtual void hoverLeaveEvent(QGraphicsSceneHoverEvent * event);
@@ -42,7 +45,7 @@ private:
     GraphicsDropShadowEffect *shadow;
     mutable QPainterPath *m_shape;
     mutable GraphicsHighlightItem *m_helper;
-    bool m_highlighted, m_hover;
+    bool m_highlighted, m_hover, m_shadowenabled;
 
     QPropertyAnimation *aniHighlight, *aniShadow;
     QParallelAnimationGroup *aniGroup;

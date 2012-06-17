@@ -41,12 +41,14 @@ public:
     QString decayTypeAsText() const;
     QGraphicsScene * levelPlot();
     void setUpdateableUi(Ui::SpectratorMainWindow *updui);
+    void setShadowEnabled(bool enable);
 
     QString toText() const;
 
     QVector<QPointF> gammaSpectrum(double fwhm) const;
 
 signals:
+    void enableShadow(bool enable);
     
 private slots:
     void itemClicked(ClickableItem *item);
@@ -88,6 +90,7 @@ private:
     GammaTransition *firstSelectedGamma, *secondSelectedGamma;
     EnergyLevel *selectedEnergyLevel;
 
+    static const int primaryFontSize;
     static const double outerGammaMargin; // margin between level texts (spin, energy) and gammas
     static const double outerLevelTextMargin; // level lines extend beyond the beginning/end of the level texts by this value
     static const double maxExtraLevelDistance; // maximal additional distance between two level lines

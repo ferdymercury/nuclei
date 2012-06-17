@@ -7,6 +7,8 @@
 #include <QSettings>
 #include <QTimer>
 #include <QSvgGenerator>
+#include <QFileDialog>
+#include <QPrinter>
 #include <qwt_plot.h>
 #include <qwt_plot_curve.h>
 #include <qwt_plot_grid.h>
@@ -16,6 +18,7 @@
 #include <qwt_series_data.h>
 #include <qwt_scale_engine.h>
 #include <qwt_text.h>
+#include <qwt_plot_renderer.h>
 #include "version.h"
 
 #include "ENSDF.h"
@@ -29,12 +32,12 @@ public:
     PlotZoomer(QwtPlotCanvas *c)
         : QwtPlotZoomer(c)
     {
-    };
+    }
 protected:
     virtual QwtText trackerTextF(const QPointF &p) const
     {
         return QwtText(QString("%1 keV").arg(p.x(), 0, 'f', 1));
-    };
+    }
 };
 
 Spectrator::Spectrator(QWidget *parent) :
@@ -89,6 +92,7 @@ Spectrator::Spectrator(QWidget *parent) :
     connect(ui->decayListWidget, SIGNAL(currentItemChanged(QListWidgetItem*,QListWidgetItem*)), this, SLOT(selectedDecay(QListWidgetItem*,QListWidgetItem*)));
 
     connect(ui->actionSVG_Export, SIGNAL(triggered()), this, SLOT(svgExport()));
+    connect(ui->actionPDF_Export, SIGNAL(triggered()), this, SLOT(pdfExport()));
 
     connect(ui->actionShow_all, SIGNAL(triggered()), this, SLOT(showAll()));
     connect(ui->actionOriginal_Size, SIGNAL(triggered()), this, SLOT(showOriginalSize()));
@@ -109,6 +113,8 @@ Spectrator::Spectrator(QWidget *parent) :
 Spectrator::~Spectrator()
 {
     QSettings s;
+
+    s.setValue("activeTab", (ui->tabWidget->currentWidget() == ui->decayCascadeTab) ? "decay" : "energy");
 
     s.setValue("energyScale", ui->actionLinear->isChecked() ? "lin" : "log");
 
@@ -131,6 +137,11 @@ Spectrator::~Spectrator()
 
 void Spectrator::initialize()
 {
+    QSettings s;
+    // initialize settings if necessary
+    if (!s.contains("exportDir"))
+        s.setValue("exportDir", QDir::homePath());
+
     // load available mass numbers (i.e. search for available ENSDF files)
     QStringList a(ENSDF::aValues());
     bool firsttry = true;
@@ -150,12 +161,15 @@ void Spectrator::initialize()
     ui->aListWidget->addItems(a);
 
     // restore last session
-    QSettings s;
-
     eres->setValue(s.value("fwhmResolution", 5.0).toDouble());
 
     if (s.value("energyScale", "lin").toString() == "log")
         ui->actionLogarithmic->trigger();
+
+    if (s.value("activeTab", "decay").toString() == "decay")
+        ui->tabWidget->setCurrentWidget(ui->decayCascadeTab);
+    else
+        ui->tabWidget->setCurrentWidget(ui->energySpectrumTab);
 
     QString selectedA(s.value("selectedA").toString());
     QList<QListWidgetItem *> aItems(ui->aListWidget->findItems(selectedA, Qt::MatchExactly));
@@ -236,17 +250,81 @@ void Spectrator::updateEnergySpectrum()
 
 void Spectrator::svgExport()
 {
-    QSvgGenerator svgGen;
+    QSettings s;
 
-    svgGen.setFileName( "/home/mnagl/scene2svg.svg" );
-    //svgGen.setSize(ui->decayView->scene()->sceneRect().size());
-    svgGen.setViewBox(ui->decayView->scene()->sceneRect());
-    svgGen.setTitle(tr("SVG Generator Example Drawing"));
-    svgGen.setDescription(tr("An SVG drawing created by the SVG Generator "
-                                "Example provided with Qt."));
+    if (ui->tabWidget->currentWidget() == ui->decayCascadeTab) {
+        if (decay.isNull())
+            return;
 
-    QPainter painter(&svgGen);
-    ui->decayView->scene()->render(&painter);
+        QString fn(QFileDialog::getSaveFileName(this, "Save As", s.value("exportDir").toString(), "Scalable Vector Graphics (*.svg)"));
+        if (fn.isEmpty())
+            return;
+
+        QRectF inrect = ui->decayView->scene()->sceneRect();
+        QRectF outrect = inrect.adjusted(-10.0, -10.0, 10.0, 10.0);
+
+        QSvgGenerator svgGen;
+        svgGen.setFileName(fn);
+        svgGen.setSize(outrect.toRect().size());
+        svgGen.setViewBox(outrect);
+        svgGen.setTitle(tr("SVG Generator Example Drawing"));
+        svgGen.setDescription(tr("An SVG drawing created by the SVG Generator "
+                                 "Example provided with Qt."));
+
+        decay->setShadowEnabled(false);
+        QPainter painter(&svgGen);
+        ui->decayView->scene()->render(&painter, inrect, inrect);
+        decay->setShadowEnabled(true);
+    }
+    else {
+        QString fn(QFileDialog::getSaveFileName(this, "Save As", s.value("exportDir").toString(), "Scalable Vector Graphics (*.svg)"));
+        if (fn.isEmpty())
+            return;
+
+        QwtPlotRenderer r(this);
+        r.setLayoutFlags(QwtPlotRenderer::KeepFrames);
+        r.renderDocument(plot, fn, "svg", QSizeF(180.0, 120.0), 300);
+    }
+}
+
+void Spectrator::pdfExport()
+{
+    QSettings s;
+
+    if (ui->tabWidget->currentWidget() == ui->decayCascadeTab) {
+        if (decay.isNull())
+            return;
+
+        QString fn(QFileDialog::getSaveFileName(this, "Save As", s.value("exportDir").toString(), "Portable Document Format (*.pdf)"));
+        if (fn.isEmpty())
+            return;
+
+        const int scalefactor = 10;
+        const double margin = 3.0;
+
+        QRectF inrect = ui->decayView->scene()->sceneRect();
+        QRectF outrect = inrect.adjusted(-margin*scalefactor, -margin*scalefactor, margin*scalefactor, margin*scalefactor);
+
+        QPrinter p(QPrinter::HighResolution);
+        p.setOutputFileName(fn);
+        p.setPageMargins(margin, margin, margin, margin, QPrinter::Millimeter);
+        p.setOutputFormat(QPrinter::PdfFormat);
+        p.setPaperSize(outrect.toRect().size() / scalefactor, QPrinter::Millimeter);
+
+        decay->setShadowEnabled(false);
+        QPainter painter(&p);
+        ui->decayView->scene()->render(&painter);
+        decay->setShadowEnabled(true);
+    }
+    else {
+        QString fn(QFileDialog::getSaveFileName(this, "Save As", s.value("exportDir").toString(), "Portable Document Format (*.pdf)"));
+        if (fn.isEmpty())
+            return;
+
+        QwtPlotRenderer r(this);
+        r.setLayoutFlags(QwtPlotRenderer::KeepFrames);
+        r.renderDocument(plot, fn, "pdf", QSizeF(180.0, 120.0), 300);
+    }
 }
 
 void Spectrator::showAll()
@@ -318,7 +396,7 @@ void Spectrator::setPlotLog()
 void Spectrator::showAbout()
 {
     QMessageBox::about(this,
-                       tr("About: ") + QCoreApplication::applicationName() + QString(" ") + QCoreApplication::applicationVersion(),
+                       QString("About: %1 %2").arg(QCoreApplication::applicationName(), QCoreApplication::applicationVersion()),
                        QString::fromUtf8(SPECTRATORABOUT "<hr />" LIBAKKABOUT "<hr />" GPL)
                        );
 }

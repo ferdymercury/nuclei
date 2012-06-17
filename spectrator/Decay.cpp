@@ -16,6 +16,7 @@
 #include "ui_Spectrator.h"
 #include "Spectrator.h"
 
+const int Decay::primaryFontSize = 14;
 const double Decay::outerGammaMargin = 50.0;
 const double Decay::outerLevelTextMargin = 4.0; // level lines extend beyond the beginning/end of the level texts by this value
 const double Decay::maxExtraLevelDistance = 120.0;
@@ -142,6 +143,7 @@ QGraphicsScene * Decay::levelPlot()
             QFontMetrics stdBoldFontMetrics(stdBoldFont);
 
             level->item = new ActiveGraphicsItemGroup(level);
+            connect(this, SIGNAL(enableShadow(bool)), level->item, SLOT(setShadowEnabled(bool)));
             level->item->setActiveColor(QColor(224, 186, 100, 180));
             connect(level->item, SIGNAL(clicked(ClickableItem*)), this, SLOT(itemClicked(ClickableItem*)));
 
@@ -209,6 +211,7 @@ QGraphicsScene * Decay::levelPlot()
             QList<GammaTransition*> levelgammas = level->depopulatingTransitions();
             foreach (GammaTransition *gamma, levelgammas) {
                 ActiveGraphicsItemGroup *item = gamma->createGammaGraphicsItem(gammaFont, gammaPen, intenseGammaPen);
+                connect(this, SIGNAL(enableShadow(bool)), item, SLOT(setShadowEnabled(bool)));
                 connect(item, SIGNAL(clicked(ClickableItem*)), this, SLOT(itemClicked(ClickableItem*)));
                 scene->addItem(item);
             }
@@ -273,6 +276,11 @@ QGraphicsScene * Decay::levelPlot()
 void Decay::setUpdateableUi(Ui::SpectratorMainWindow *updui)
 {
     ui = updui;
+}
+
+void Decay::setShadowEnabled(bool enable)
+{
+    emit enableShadow(enable);
 }
 
 QString Decay::toText() const
@@ -695,9 +703,19 @@ void Decay::alignGraphicsItems()
     // set level positions and sizes
     double arrowVEnd = std::numeric_limits<double>::quiet_NaN();
     foreach (EnergyLevel *level, levels) {
+
+        // temporarily remove items from group (workaround)
+        level->item->removeFromGroup(level->grahltext);
+        level->item->removeFromGroup(level->graspintext);
+        level->item->removeFromGroup(level->graetext);
+        level->item->removeFromGroup(level->graclickarea);
+        level->item->removeFromGroup(level->graline);
+        level->item->removeHighlightHelper(level->grahighlighthelper);
+
+        // rescale
+        level->grahighlighthelper->setRect(-leftlinelength, -0.5*highlightWidth, leftlinelength+rightlinelength, highlightWidth);
         level->graline->setLine(-leftlinelength, 0.0, rightlinelength, 0.0);
         level->graclickarea->setRect(-leftlinelength, -0.5*stdBoldFontMetrics.height(), leftlinelength+rightlinelength, stdBoldFontMetrics.height());
-        level->grahighlighthelper->setRect(-leftlinelength, -0.5*highlightWidth, leftlinelength+rightlinelength, highlightWidth);
         level->graspintext->setPos(-leftlinelength + outerLevelTextMargin, -stdBoldFontMetrics.height());
         level->graetext->setPos(rightlinelength - outerLevelTextMargin - stdBoldFontMetrics.width(level->graetext->text()), -stdBoldFontMetrics.height());
         double levelHlPos = 0.0;
@@ -709,6 +727,14 @@ void Decay::alignGraphicsItems()
         }
         level->grahltext->setPos(levelHlPos, -0.5*stdBoldFontMetrics.height());
 
+        // re-add items to group
+        level->item->addHighlightHelper(level->grahighlighthelper);
+        level->item->addToGroup(level->graline);
+        level->item->addToGroup(level->graclickarea);
+        level->item->addToGroup(level->graetext);
+        level->item->addToGroup(level->graspintext);
+        level->item->addToGroup(level->grahltext);
+
         level->item->setPos(0.0, level->graYPos); // add 0.5*pen-width to avoid antialiasing artifacts
 
         if (level->grafeedarrow) {
@@ -718,7 +744,7 @@ void Decay::alignGraphicsItems()
             level->grafeedarrow->setLine(leftend, arrowY, rightend, arrowY);
             level->graarrowhead->setPos((parentpos == RightParent) ? rightlinelength + arrowGap : -leftlinelength - arrowGap, arrowY);
             if (std::isnan(arrowVEnd))
-                arrowVEnd = arrowY;
+                arrowVEnd = arrowY + 0.5*level->grafeedarrow->pen().widthF();
             level->grafeedintens->setPos(leftend + 15.0, arrowY - feedIntensityFontMetrics.height());
         }
     }
@@ -755,7 +781,7 @@ void Decay::alignGraphicsItems()
         double y = qRound(parentY - 0.3*pNuc.nuclideGraphicsItem()->boundingRect().height()) + 0.5*pNucBaseLevel->pen().widthF();
 
         double arrowX = (parentpos == RightParent) ? activeright : activeleft;
-        double arrowVStart = y;
+        double arrowVStart = y - 0.5*pNucBaseLevel->pen().widthF();
 
         double topMostLevel = y;
 
@@ -765,7 +791,7 @@ void Decay::alignGraphicsItems()
             startleft = activeleft;
             startright = activeright;
             double startlevelY = y-pNucBaseEnergy->boundingRect().height() - 10.0;
-            arrowVStart = startlevelY;
+            arrowVStart = startlevelY - 0.5*pNucStartLevel->pen().widthF();
             topMostLevel = startlevelY;
             pNucStartLevel->setLine(startleft, startlevelY, startright, startlevelY);
             pNucEnergy->setPos(startright - stdBoldFontMetrics.width(pNucEnergy->text()), startlevelY - stdBoldFontMetrics.height());
@@ -786,13 +812,17 @@ void Decay::alignGraphicsItems()
 void Decay::initializeStyle()
 {
     // prepare fonts and their metrics
+    stdFont.setPixelSize(primaryFontSize);
+    stdBoldFont.setPixelSize(primaryFontSize);
     stdBoldFont.setBold(true);
-    nucFont.setPointSizeF(nucFont.pointSizeF() * 2.5);
+    nucFont.setPixelSize(primaryFontSize * 20 / 10);
     nucFont.setBold(true);
-    nucIndexFont.setPointSizeF(nucIndexFont.pointSizeF() * 1.5);
+    nucIndexFont.setPixelSize(primaryFontSize * 12 / 10);
     nucIndexFont.setBold(true);
-    parentHlFont.setPointSizeF(parentHlFont.pointSizeF() * 1.3);
+    parentHlFont.setPixelSize(primaryFontSize * 12 / 10);
+    feedIntensityFont.setPixelSize(primaryFontSize);
     feedIntensityFont.setItalic(true);
+    gammaFont.setPixelSize(primaryFontSize);
 
     // prepare pens
     levelPen.setWidthF(1.0);
@@ -800,10 +830,10 @@ void Decay::initializeStyle()
     stableLevelPen.setWidthF(2.0);
     stableLevelPen.setCapStyle(Qt::FlatCap);
     feedArrowPen.setWidthF(1.0);
-    feedArrowPen.setCapStyle(Qt::SquareCap);
+    feedArrowPen.setCapStyle(Qt::FlatCap);
     intenseFeedArrowPen.setWidthF(2.0);
     intenseFeedArrowPen.setColor(QColor(232, 95, 92));
-    intenseFeedArrowPen.setCapStyle(Qt::SquareCap);
+    intenseFeedArrowPen.setCapStyle(Qt::FlatCap);
     gammaPen.setWidthF(1.0);
     gammaPen.setCapStyle(Qt::FlatCap);
     intenseGammaPen.setWidthF(2.0);

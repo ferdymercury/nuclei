@@ -1,4 +1,7 @@
 #include "GraphicsDropShadowEffect.h"
+#include <QPainter>
+#include <QPaintDevice>
+#include <QSvgGenerator>
 
 GraphicsDropShadowEffect::GraphicsDropShadowEffect(QObject *parent)
     : QGraphicsDropShadowEffect(parent), m_opacity(1.0)

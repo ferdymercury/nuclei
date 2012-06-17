@@ -15,7 +15,7 @@ const bool ActiveGraphicsItemGroup::animate = false;
 
 ActiveGraphicsItemGroup::ActiveGraphicsItemGroup(ClickableItem *associatedItem)
     : assocItem(associatedItem), shadow(new GraphicsDropShadowEffect), m_shape(0), m_helper(0),
-      m_highlighted(false), m_hover(false),
+      m_highlighted(false), m_hover(false), m_shadowenabled(true),
       aniHighlight(0), aniShadow(0), aniGroup(0)
 {
     // prepare highlighting
@@ -167,7 +167,7 @@ void ActiveGraphicsItemGroup::showHighlighting()
     }
     else {
         m_helper->show();
-        shadow->setEnabled(true);
+        shadow->setEnabled(true && m_shadowenabled);
     }
 }
 
@@ -206,4 +206,12 @@ void ActiveGraphicsItemGroup::updateHighlightColor()
     shadow->setColor(c);
     if (m_helper)
         m_helper->setBrush(c);
+}
+
+void ActiveGraphicsItemGroup::setShadowEnabled(bool enable)
+{
+    if (enable != m_shadowenabled) {
+        m_shadowenabled = enable;
+        shadow->setEnabled(enable && (m_highlighted || m_hover));
+    }
 }

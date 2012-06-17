@@ -3,11 +3,14 @@
 
 #define VERSION "1.0"
 
+#define SPECTRATORURL "http://???.sf.net"
+
 #define SPECTRATORABOUT "\
 <p><b>Spectrator</b></p><p>shows decay schemes, computes anisotropies of decay cascades and \
 shows simplistic approximations of the expected energy spectra.</p> \
 \
 <p>Copyright 2012 Matthias Nagl, Georg-August Universität Göttingen</p> \
+<p><a href=\"" SPECTRATORURL "\">" SPECTRATORURL "</a></p> \
 "
 
 #define LIBAKKABOUT "\

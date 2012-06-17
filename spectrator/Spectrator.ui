@@ -231,6 +231,7 @@
    <attribute name="toolBarBreak">
     <bool>false</bool>
    </attribute>
+   <addaction name="actionPDF_Export"/>
    <addaction name="actionSVG_Export"/>
    <addaction name="separator"/>
    <addaction name="actionZoom_In"/>
@@ -908,13 +909,25 @@
   <action name="actionSVG_Export">
    <property name="icon">
     <iconset resource="spectrator.qrc">
-     <normaloff>:/document-export.png</normaloff>:/document-export.png</iconset>
+     <normaloff>:/image-svg+xml.png</normaloff>:/image-svg+xml.png</iconset>
    </property>
    <property name="text">
     <string>SVG Export</string>
    </property>
    <property name="toolTip">
     <string>Export as SVG File</string>
+   </property>
+  </action>
+  <action name="actionPDF_Export">
+   <property name="icon">
+    <iconset resource="spectrator.qrc">
+     <normaloff>:/application-pdf.png</normaloff>:/application-pdf.png</iconset>
+   </property>
+   <property name="text">
+    <string>PDF Export</string>
+   </property>
+   <property name="toolTip">
+    <string>Export as PDF File</string>
    </property>
   </action>
  </widget>
