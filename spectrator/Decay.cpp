@@ -930,11 +930,20 @@ void Decay::processENSDFLevels() const
         }
         // process decay information
         else if (!levels.isEmpty() && line.startsWith(dNuc.nucid() + "  E ")) {
+            double intensity = 0.0;
+            bool cok1, cok2;
             QString iestr(line.mid(31, 8));
             iestr.remove('(').remove(')');
-            double ie = clocale.toDouble(iestr.trimmed(), &convok);
-            if (convok)
-                currentLevel->feedintens = ie * normalizeDecIntensToPercentParentDecay;
+            double ie = clocale.toDouble(iestr.trimmed(), &cok1);
+            if (cok1)
+                intensity += ie * normalizeDecIntensToPercentParentDecay;
+            QString ibstr(line.mid(21, 8));
+            ibstr.remove('(').remove(')');
+            double ib = clocale.toDouble(ibstr.trimmed(), &cok2);
+            if (cok2)
+                intensity += ib * normalizeDecIntensToPercentParentDecay;
+            if (cok1 || cok2)
+                currentLevel->feedintens = intensity;
         }
         else if (!levels.isEmpty() && line.startsWith(dNuc.nucid() + "  B ")) {
             QString ibstr(line.mid(21, 8));
