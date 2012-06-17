@@ -144,10 +144,10 @@ void GroupBox::setExpanded(bool expanded)
                 static_cast<QWidget*>(child)->setVisible(expanded);
         }
         if (expanded) {
-          //setFlat(qxt_d->flat);
+          setFlat(qxt_d->flat);
         } else {
           qxt_d->flat = isFlat();
-          //setFlat(true);
+          setFlat(true);
         }
     }
 }

@@ -19,9 +19,8 @@ ENSDFDownloader::ENSDFDownloader(QWidget *parent) :
 {
     ui->setupUi(this);
 
-    connect(ui->buttonBox, SIGNAL(accepted()), this, SLOT(accept()));
-    connect(ui->buttonBox, SIGNAL(rejected()), this, SLOT(reject()));
-    connect(ui->ftpButtonBox, SIGNAL(rejected()), this, SLOT(resetFtpTransfer()));
+    connect(ui->closeButton, SIGNAL(clicked()), this, SLOT(reject()));
+    connect(ui->ftpCancelButton, SIGNAL(clicked()), this, SLOT(resetFtpTransfer()));
 
     connect(ui->downloadButton, SIGNAL(clicked()), this, SLOT(download()));
     connect(ui->localButton, SIGNAL(clicked()), this, SLOT(selectLocal()));
@@ -96,6 +95,7 @@ void ENSDFDownloader::download()
 
     // download and extract zip files
     ui->stackedWidget->setCurrentWidget(ui->progressPage);
+    ui->downloadButton->setDisabled(true);
 
     pendinghandle = ftp->connectToHost("ftp.nndc.bnl.gov");
     ftpstate = Connecting;
@@ -118,8 +118,8 @@ void ENSDFDownloader::setupDownload()
     QDialog d;
     Ui::ENSDFDownloaderSettings setui;
     setui.setupUi(&d);
-    connect(setui.buttonBox, SIGNAL(accepted()), &d, SLOT(accept()));
-    connect(setui.buttonBox, SIGNAL(rejected()), &d, SLOT(reject()));
+    connect(setui.okButton, SIGNAL(clicked()), &d, SLOT(accept()));
+    connect(setui.cancelButton, SIGNAL(clicked()), &d, SLOT(reject()));
     if (d.exec() == QDialog::Accepted) {
         ftp->setTransferMode(setui.activeRadio->isChecked() ? QFtp::Active : QFtp::Passive);
         ftp->setProxy(setui.hostEdit->text(), setui.portEdit->text().toInt());
@@ -128,7 +128,10 @@ void ENSDFDownloader::setupDownload()
 
 void ENSDFDownloader::ftpDispatcher(int id, bool error)
 {
-    if ((pendinghandle != id || error) && (ftpstate != NotConnected)) {
+    if (pendinghandle != id)
+        return;
+
+    if (error && (ftpstate != NotConnected)) {
         resetFtpTransfer();
         QMessageBox::warning(this, "Connection Error", "An error occured while downloading the database files. Please check your settings and internet connection and try again.", QMessageBox::Ok, QMessageBox::Ok);
         return;
@@ -228,6 +231,7 @@ void ENSDFDownloader::resetFtpTransfer()
     ftp->close();
     ui->progressBar->setValue(0);
     ui->stackedWidget->setCurrentWidget(ui->buttonPage);
+    ui->downloadButton->setEnabled(true);
 
     // remove downloaded files
     foreach (QString fn, ftpFiles)
