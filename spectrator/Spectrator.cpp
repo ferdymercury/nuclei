@@ -51,7 +51,7 @@ Spectrator::Spectrator(QWidget *parent) :
     // add toolbar widgets
     eres = new QDoubleSpinBox(ui->mainToolBar);
     eres->setSuffix(" %");
-    eres->setRange(0.1, 100.0);
+    eres->setRange(1.5, 100.0);
     eres->setSingleStep(0.2);
     eres->setToolTip("Energy resolution: FWHM in % at 662 keV");
     connect(eres, SIGNAL(valueChanged(double)), this, SLOT(updateEnergySpectrum()));

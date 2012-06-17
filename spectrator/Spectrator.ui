@@ -118,6 +118,9 @@
              <property name="text">
               <string>-</string>
              </property>
+             <property name="textInteractionFlags">
+              <set>Qt::LinksAccessibleByMouse|Qt::TextSelectableByKeyboard|Qt::TextSelectableByMouse</set>
+             </property>
             </widget>
            </item>
            <item row="0" column="3">
@@ -133,6 +136,9 @@
              </property>
              <property name="text">
               <string>-</string>
+             </property>
+             <property name="textInteractionFlags">
+              <set>Qt::LinksAccessibleByMouse|Qt::TextSelectableByKeyboard|Qt::TextSelectableByMouse</set>
              </property>
             </widget>
            </item>
@@ -165,6 +171,9 @@
              </property>
              <property name="text">
               <string>-</string>
+             </property>
+             <property name="textInteractionFlags">
+              <set>Qt::LinksAccessibleByMouse|Qt::TextSelectableByKeyboard|Qt::TextSelectableByMouse</set>
              </property>
             </widget>
            </item>
@@ -203,6 +212,9 @@
              </property>
              <property name="text">
               <string>-</string>
+             </property>
+             <property name="textInteractionFlags">
+              <set>Qt::LinksAccessibleByMouse|Qt::TextSelectableByKeyboard|Qt::TextSelectableByMouse</set>
              </property>
             </widget>
            </item>
@@ -940,6 +952,13 @@
    <container>1</container>
   </customwidget>
  </customwidgets>
+ <tabstops>
+  <tabstop>aListWidget</tabstop>
+  <tabstop>nuclideListWidget</tabstop>
+  <tabstop>decayListWidget</tabstop>
+  <tabstop>tabWidget</tabstop>
+  <tabstop>decayView</tabstop>
+ </tabstops>
  <resources>
   <include location="spectrator.qrc"/>
  </resources>
