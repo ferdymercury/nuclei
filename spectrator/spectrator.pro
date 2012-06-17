@@ -1,4 +1,4 @@
-QT       += core gui network
+QT       += core gui network svg
 
 TARGET = spectrator
 TEMPLATE = app

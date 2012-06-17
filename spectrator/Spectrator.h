@@ -31,6 +31,8 @@ private slots:
 
     void updateEnergySpectrum();
 
+    void svgExport();
+
     void showAll();
     void showOriginalSize();
     void zoomIn();

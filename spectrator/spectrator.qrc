@@ -9,5 +9,6 @@
         <file>download.png</file>
         <file>configure.png</file>
         <file>document-open-folder.png</file>
+        <file>document-export.png</file>
     </qresource>
 </RCC>

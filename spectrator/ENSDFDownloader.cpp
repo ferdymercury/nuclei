@@ -254,8 +254,8 @@ void ENSDFDownloader::processZipFiles()
         JlCompress::extractDir(dest.filePath(fn), dest.absolutePath());
     }
     ui->progressBar->setRange(0, 100);
-    resetFtpTransfer();
     saveENSDFLocation();
+    resetFtpTransfer();
     accept();
 }
 
@@ -263,6 +263,7 @@ void ENSDFDownloader::saveENSDFLocation()
 {
     QSettings s;
     s.setValue("ensdfPath", dest.absolutePath());
+    s.setValue("ensdfVersion", ensdfVersion.isEmpty() ? "user-selected" : ensdfVersion);
 }
 
 

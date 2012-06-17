@@ -6,6 +6,7 @@
 #include <QMessageBox>
 #include <QSettings>
 #include <QTimer>
+#include <QSvgGenerator>
 #include <qwt_plot.h>
 #include <qwt_plot_curve.h>
 #include <qwt_plot_grid.h>
@@ -87,6 +88,8 @@ Spectrator::Spectrator(QWidget *parent) :
     connect(ui->nuclideListWidget, SIGNAL(currentTextChanged(QString)), this, SLOT(selectedNuclide(QString)));
     connect(ui->decayListWidget, SIGNAL(currentItemChanged(QListWidgetItem*,QListWidgetItem*)), this, SLOT(selectedDecay(QListWidgetItem*,QListWidgetItem*)));
 
+    connect(ui->actionSVG_Export, SIGNAL(triggered()), this, SLOT(svgExport()));
+
     connect(ui->actionShow_all, SIGNAL(triggered()), this, SLOT(showAll()));
     connect(ui->actionOriginal_Size, SIGNAL(triggered()), this, SLOT(showOriginalSize()));
     connect(ui->actionZoom_In, SIGNAL(triggered()), this, SLOT(zoomIn()));
@@ -130,7 +133,11 @@ void Spectrator::initialize()
 {
     // load available mass numbers (i.e. search for available ENSDF files)
     QStringList a(ENSDF::aValues());
+    bool firsttry = true;
     while (a.isEmpty()) {
+        if (!firsttry)
+            if (QMessageBox::Close == QMessageBox::warning(this, "Selected Folder is Empty", "Please select a folder containing the ENSDF database or use the download feature!", QMessageBox::Ok | QMessageBox::Close, QMessageBox::Ok))
+                qApp->quit();
         ENSDFDownloader downloader(this);
         if (downloader.exec() != QDialog::Accepted) {
             qApp->quit();
@@ -138,6 +145,7 @@ void Spectrator::initialize()
         }
 
         a = ENSDF::aValues();
+        firsttry = false;
     }
     ui->aListWidget->addItems(a);
 
@@ -224,6 +232,21 @@ void Spectrator::updateEnergySpectrum()
     if (!data.isEmpty())
         plot->setAxisScale(QwtPlot::xBottom, 0.0, data.last().x());
     zoomer->setZoomBase();
+}
+
+void Spectrator::svgExport()
+{
+    QSvgGenerator svgGen;
+
+    svgGen.setFileName( "/home/mnagl/scene2svg.svg" );
+    //svgGen.setSize(ui->decayView->scene()->sceneRect().size());
+    svgGen.setViewBox(ui->decayView->scene()->sceneRect());
+    svgGen.setTitle(tr("SVG Generator Example Drawing"));
+    svgGen.setDescription(tr("An SVG drawing created by the SVG Generator "
+                                "Example provided with Qt."));
+
+    QPainter painter(&svgGen);
+    ui->decayView->scene()->render(&painter);
 }
 
 void Spectrator::showAll()

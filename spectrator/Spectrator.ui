@@ -231,6 +231,8 @@
    <attribute name="toolBarBreak">
     <bool>false</bool>
    </attribute>
+   <addaction name="actionSVG_Export"/>
+   <addaction name="separator"/>
    <addaction name="actionZoom_In"/>
    <addaction name="actionZoom_Out"/>
    <addaction name="actionOriginal_Size"/>
@@ -901,6 +903,18 @@
    </property>
    <property name="toolTip">
     <string>Logarithmic Y-Axis Scaling</string>
+   </property>
+  </action>
+  <action name="actionSVG_Export">
+   <property name="icon">
+    <iconset resource="spectrator.qrc">
+     <normaloff>:/document-export.png</normaloff>:/document-export.png</iconset>
+   </property>
+   <property name="text">
+    <string>SVG Export</string>
+   </property>
+   <property name="toolTip">
+    <string>Export as SVG File</string>
    </property>
   </action>
  </widget>
