@@ -45,7 +45,7 @@ QStringList ENSDF::aValues() // static
 
 QStringList ENSDF::daughterNuclides() const
 {
-    QStringList result = contents.filter("ADOPTED LEVELS, GAMMAS");
+    QStringList result = contents.filter("    ADOPTED LEVELS");
     for (int i=0; i<result.size(); i++)
         if (result[i].size() >=5)
             result[i][4] = (result[i][4]).toLower();
