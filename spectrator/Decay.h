@@ -34,7 +34,7 @@ public:
     };
 
     explicit Decay(Nuclide parentNuclide, Nuclide daughterNuclide, Type decayType, QObject *parent = 0);
-    explicit Decay(const QStringList &ensdfData, QObject *parent = 0);
+    explicit Decay(const QStringList &ensdfData, const QStringList &ensdfAdoptedLevels, QObject *parent = 0);
 
     ~Decay();
 
@@ -61,6 +61,7 @@ private:
     void alignGraphicsItems();
     void initializeStyle();
     void processENSDFLevels() const;
+    int64_t parseEnsdfEnergy(QString estr) const;
     double gauss(const double x, const double sigma) const;
 
     Nuclide pNuc, dNuc;
@@ -72,7 +73,7 @@ private:
     mutable double normalizeGammaIntensToPercentParentDecay;
 
 
-    QStringList ensdf;
+    QStringList ensdf, adopt;
     mutable QMap<int64_t, EnergyLevel*> levels;
     QGraphicsScene *scene;
     Ui::SpectratorMainWindow *ui;

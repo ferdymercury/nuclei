@@ -351,6 +351,9 @@
      </item>
      <item row="11" column="0">
       <widget class="QLabel" name="popMixingLabel">
+       <property name="toolTip">
+        <string>δ</string>
+       </property>
        <property name="text">
         <string>Mixing Ratio:</string>
        </property>
@@ -358,6 +361,9 @@
      </item>
      <item row="11" column="1">
       <widget class="QLabel" name="popMixing">
+       <property name="toolTip">
+        <string>δ</string>
+       </property>
        <property name="text">
         <string>-</string>
        </property>
@@ -437,7 +443,7 @@
        </property>
       </widget>
      </item>
-     <item row="18" column="0" colspan="2">
+     <item row="20" column="0" colspan="2">
       <spacer name="verticalSpacer_2">
        <property name="orientation">
         <enum>Qt::Vertical</enum>
@@ -453,7 +459,7 @@
        </property>
       </spacer>
      </item>
-     <item row="19" column="0" colspan="2">
+     <item row="21" column="0" colspan="2">
       <widget class="QLabel" name="depopGammaLabel">
        <property name="font">
         <font>
@@ -469,57 +475,60 @@
        </property>
       </widget>
      </item>
-     <item row="20" column="0" colspan="2">
+     <item row="22" column="0" colspan="2">
       <widget class="Line" name="line_5">
        <property name="orientation">
         <enum>Qt::Horizontal</enum>
        </property>
       </widget>
      </item>
-     <item row="21" column="0">
+     <item row="23" column="0">
       <widget class="QLabel" name="depopEnergyLabel">
        <property name="text">
         <string>Energy:</string>
        </property>
       </widget>
      </item>
-     <item row="21" column="1">
+     <item row="23" column="1">
       <widget class="QLabel" name="depopEnergy">
        <property name="text">
         <string>- keV</string>
        </property>
       </widget>
      </item>
-     <item row="22" column="0">
+     <item row="24" column="0">
       <widget class="QLabel" name="depopIntensityLabel">
        <property name="text">
         <string>Relative Intensity:</string>
        </property>
       </widget>
      </item>
-     <item row="22" column="1">
+     <item row="24" column="1">
       <widget class="QLabel" name="depopIntensity">
        <property name="text">
         <string>- %</string>
        </property>
       </widget>
      </item>
-     <item row="23" column="0">
+     <item row="25" column="0">
       <widget class="QLabel" name="depopMultipolarityLabel">
        <property name="text">
         <string>Multipolarity:</string>
        </property>
       </widget>
      </item>
-     <item row="23" column="1">
+     <item row="25" column="1">
       <widget class="QLabel" name="depopMultipolarity">
        <property name="text">
         <string>&lt;i&gt;unknown&lt;/i&gt;</string>
        </property>
       </widget>
      </item>
-     <item row="25" column="1">
+     <item row="27" column="1">
       <widget class="QLabel" name="depopMixing">
+       <property name="toolTip">
+        <string>δ</string>
+       </property>
        <property name="text">
         <string>-</string>
        </property>
@@ -564,7 +573,7 @@
        </property>
       </spacer>
      </item>
-     <item row="27" column="0" colspan="2">
+     <item row="29" column="0" colspan="2">
       <widget class="QLabel" name="endLevelLabel">
        <property name="font">
         <font>
@@ -580,7 +589,7 @@
        </property>
       </widget>
      </item>
-     <item row="26" column="0" colspan="2">
+     <item row="28" column="0" colspan="2">
       <spacer name="verticalSpacer_4">
        <property name="orientation">
         <enum>Qt::Vertical</enum>
@@ -596,35 +605,35 @@
        </property>
       </spacer>
      </item>
-     <item row="28" column="0" colspan="2">
+     <item row="30" column="0" colspan="2">
       <widget class="Line" name="line_7">
        <property name="orientation">
         <enum>Qt::Horizontal</enum>
        </property>
       </widget>
      </item>
-     <item row="29" column="0">
+     <item row="31" column="0">
       <widget class="QLabel" name="endEnergyLabel">
        <property name="text">
         <string>Energy:</string>
        </property>
       </widget>
      </item>
-     <item row="30" column="0">
+     <item row="32" column="0">
       <widget class="QLabel" name="endSpinLabel">
        <property name="text">
         <string>Spin/Parity:</string>
        </property>
       </widget>
      </item>
-     <item row="29" column="1">
+     <item row="31" column="1">
       <widget class="QLabel" name="endEnergy">
        <property name="text">
         <string>- keV</string>
        </property>
       </widget>
      </item>
-     <item row="30" column="1">
+     <item row="32" column="1">
       <widget class="QLabel" name="endSpin">
        <property name="text">
         <string>/</string>
@@ -652,10 +661,53 @@
        </property>
       </widget>
      </item>
-     <item row="25" column="0">
+     <item row="27" column="0">
       <widget class="QLabel" name="depopMixingLabel">
+       <property name="toolTip">
+        <string>δ</string>
+       </property>
        <property name="text">
         <string>Mixing Ratio:</string>
+       </property>
+      </widget>
+     </item>
+     <item row="18" column="0">
+      <widget class="QLabel" name="intMuLabel">
+       <property name="toolTip">
+        <string>Magnetic dipole moment of the intermediate level</string>
+       </property>
+       <property name="text">
+        <string>µ:</string>
+       </property>
+      </widget>
+     </item>
+     <item row="19" column="0">
+      <widget class="QLabel" name="intQLabel">
+       <property name="toolTip">
+        <string>Electric quadrupole moment of the intermediate level</string>
+       </property>
+       <property name="text">
+        <string>Q:</string>
+       </property>
+      </widget>
+     </item>
+     <item row="18" column="1">
+      <widget class="QLabel" name="intMu">
+       <property name="toolTip">
+        <string>Magnetic dipole moment of the intermediate level</string>
+       </property>
+       <property name="text">
+        <string>-</string>
+       </property>
+      </widget>
+     </item>
+     <item row="19" column="1">
+      <widget class="QLabel" name="intQ">
+       <property name="toolTip">
+        <string>Electric quadrupole moment of the intermediate level</string>
+       </property>
+       <property name="text">
+        <string>-</string>
        </property>
       </widget>
      </item>
