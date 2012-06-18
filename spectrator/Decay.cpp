@@ -13,8 +13,8 @@
 #include "ActiveGraphicsItemGroup.h"
 #include "GammaTransition.h"
 #include "GraphicsHighlightItem.h"
-#include "ui_Spectrator.h"
-#include "Spectrator.h"
+#include "ui_Kaihen.h"
+#include "Kaihen.h"
 
 const int Decay::primaryFontSize = 14;
 const double Decay::outerGammaMargin = 50.0;
@@ -277,7 +277,7 @@ QGraphicsScene * Decay::levelPlot()
     return scene;
 }
 
-void Decay::setUpdateableUi(Ui::SpectratorMainWindow *updui)
+void Decay::setUpdateableUi(Ui::KaihenMainWindow *updui)
 {
     ui = updui;
 }

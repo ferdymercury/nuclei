@@ -1,11 +1,10 @@
 QT       += core gui network svg
 
-TARGET = spectrator
+TARGET = kaihen
 TEMPLATE = app
 
 
 SOURCES += main.cpp\
-        Spectrator.cpp \
     ENSDF.cpp \
     Decay.cpp \
     EnergyLevel.cpp \
@@ -18,9 +17,10 @@ SOURCES += main.cpp\
     GraphicsDropShadowEffect.cpp \
     ClickableItem.cpp \
     qxtgroupbox.cpp \
-    ENSDFDownloader.cpp
+    ENSDFDownloader.cpp \
+    Kaihen.cpp
 
-HEADERS  += Spectrator.h \
+HEADERS  += \
     ENSDF.h \
     Decay.h \
     EnergyLevel.h \
@@ -34,18 +34,20 @@ HEADERS  += Spectrator.h \
     ClickableItem.h \
     version.h \
     qxtgroupbox.h \
-    ENSDFDownloader.h
+    ENSDFDownloader.h \
+    Kaihen.h
 
 INCLUDEPATH += ../../libakk/src
 LIBS += -lakk -L../../libakk
 LIBS += -lquazip
 
-FORMS    += Spectrator.ui \
+FORMS    += \
     ENSDFDownloader.ui \
-    ENSDFDownloaderSettings.ui
+    ENSDFDownloaderSettings.ui \
+    Kaihen.ui
 
 RESOURCES += \
-    spectrator.qrc
+    kaihen.qrc
 
 # QWT ####################
 
@@ -71,5 +73,5 @@ exists( C://build//qwt//src//qwt.h ) {
   LIBS += -LC://build//qwt//lib -lqwt
 }
 
-RC_FILE = spectrator.rc
+RC_FILE = kaihen.rc
 

@@ -1,11 +1,11 @@
-#ifndef SPECTRATOR_H
-#define SPECTRATOR_H
+#ifndef KAIHEN_H
+#define KAIHEN_H
 
 #include <QMainWindow>
 #include "Decay.h"
 
 namespace Ui {
-class SpectratorMainWindow;
+class KaihenMainWindow;
 }
 class ENSDF;
 class QListWidgetItem;
@@ -14,13 +14,13 @@ class QwtPlotCurve;
 class QwtPlotZoomer;
 class QDoubleSpinBox;
 
-class Spectrator : public QMainWindow
+class Kaihen : public QMainWindow
 {
     Q_OBJECT
     
 public:
-    explicit Spectrator(QWidget *parent = 0);
-    ~Spectrator();
+    explicit Kaihen(QWidget *parent = 0);
+    ~Kaihen();
 
 private slots:
     void initialize();
@@ -45,7 +45,7 @@ private slots:
     void showAbout();
     
 private:
-    Ui::SpectratorMainWindow *ui;
+    Ui::KaihenMainWindow *ui;
 
     ENSDF *currentMassChain;
     QList< QSharedPointer<Decay> > decays;
@@ -57,4 +57,4 @@ private:
     QwtPlotCurve *curve;
 };
 
-#endif // SPECTRATOR_H
+#endif // KAIHEN_H

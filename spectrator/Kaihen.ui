@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <ui version="4.0">
- <class>SpectratorMainWindow</class>
- <widget class="QMainWindow" name="SpectratorMainWindow">
+ <class>KaihenMainWindow</class>
+ <widget class="QMainWindow" name="KaihenMainWindow">
   <property name="geometry">
    <rect>
     <x>0</x>
@@ -11,11 +11,11 @@
    </rect>
   </property>
   <property name="windowTitle">
-   <string>Spectrator</string>
+   <string>Kaihen</string>
   </property>
   <property name="windowIcon">
-   <iconset resource="spectrator.qrc">
-    <normaloff>:/spectrator.png</normaloff>:/spectrator.png</iconset>
+   <iconset resource="kaihen.qrc">
+    <normaloff>:/kaihen.png</normaloff>:/kaihen.png</iconset>
   </property>
   <property name="dockNestingEnabled">
    <bool>true</bool>
@@ -878,7 +878,7 @@
   </widget>
   <action name="actionZoom_In">
    <property name="icon">
-    <iconset resource="spectrator.qrc">
+    <iconset resource="kaihen.qrc">
      <normaloff>:/zoom-in.png</normaloff>:/zoom-in.png</iconset>
    </property>
    <property name="text">
@@ -893,7 +893,7 @@
   </action>
   <action name="actionZoom_Out">
    <property name="icon">
-    <iconset resource="spectrator.qrc">
+    <iconset resource="kaihen.qrc">
      <normaloff>:/zoom-out.png</normaloff>:/zoom-out.png</iconset>
    </property>
    <property name="text">
@@ -908,7 +908,7 @@
   </action>
   <action name="actionShow_all">
    <property name="icon">
-    <iconset resource="spectrator.qrc">
+    <iconset resource="kaihen.qrc">
      <normaloff>:/zoom-fit-best.png</normaloff>:/zoom-fit-best.png</iconset>
    </property>
    <property name="text">
@@ -920,7 +920,7 @@
   </action>
   <action name="actionOriginal_Size">
    <property name="icon">
-    <iconset resource="spectrator.qrc">
+    <iconset resource="kaihen.qrc">
      <normaloff>:/zoom-original.png</normaloff>:/zoom-original.png</iconset>
    </property>
    <property name="text">
@@ -932,14 +932,14 @@
   </action>
   <action name="actionAbout">
    <property name="icon">
-    <iconset resource="spectrator.qrc">
+    <iconset resource="kaihen.qrc">
      <normaloff>:/help-about.png</normaloff>:/help-about.png</iconset>
    </property>
    <property name="text">
     <string>About</string>
    </property>
    <property name="toolTip">
-    <string>About Spectrator</string>
+    <string>About Kaihen</string>
    </property>
    <property name="shortcut">
     <string>Ctrl+I</string>
@@ -972,7 +972,7 @@
   </action>
   <action name="actionSVG_Export">
    <property name="icon">
-    <iconset resource="spectrator.qrc">
+    <iconset resource="kaihen.qrc">
      <normaloff>:/image-svg+xml.png</normaloff>:/image-svg+xml.png</iconset>
    </property>
    <property name="text">
@@ -984,7 +984,7 @@
   </action>
   <action name="actionPDF_Export">
    <property name="icon">
-    <iconset resource="spectrator.qrc">
+    <iconset resource="kaihen.qrc">
      <normaloff>:/application-pdf.png</normaloff>:/application-pdf.png</iconset>
    </property>
    <property name="text">
@@ -1012,7 +1012,7 @@
   <tabstop>decayView</tabstop>
  </tabstops>
  <resources>
-  <include location="spectrator.qrc"/>
+  <include location="kaihen.qrc"/>
  </resources>
  <connections/>
 </ui>

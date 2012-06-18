@@ -7,7 +7,6 @@
         <file>zoom-original.png</file>
         <file>zoom-out.png</file>
         <file>help-about.png</file>
-        <file>spectrator.png</file>
         <file>download.png</file>
         <file>configure.png</file>
         <file>document-open-folder.png</file>
@@ -15,5 +14,6 @@
         <file>dialog-cancel.png</file>
         <file>dialog-close.png</file>
         <file>dialog-ok.png</file>
+        <file>kaihen.png</file>
     </qresource>
 </RCC>

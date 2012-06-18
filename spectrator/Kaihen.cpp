@@ -1,5 +1,5 @@
-#include "Spectrator.h"
-#include "ui_Spectrator.h"
+#include "Kaihen.h"
+#include "ui_Kaihen.h"
 
 #include <QResizeEvent>
 #include <QDoubleSpinBox>
@@ -40,9 +40,9 @@ protected:
     }
 };
 
-Spectrator::Spectrator(QWidget *parent) :
+Kaihen::Kaihen(QWidget *parent) :
     QMainWindow(parent),
-    ui(new Ui::SpectratorMainWindow),
+    ui(new Ui::KaihenMainWindow),
     currentMassChain(0), zoomer(0)
 {
     ui->setupUi(this);
@@ -110,7 +110,7 @@ Spectrator::Spectrator(QWidget *parent) :
     QTimer::singleShot(0, this, SLOT(initialize()));
 }
 
-Spectrator::~Spectrator()
+Kaihen::~Kaihen()
 {
     QSettings s;
 
@@ -135,7 +135,7 @@ Spectrator::~Spectrator()
     delete ui;
 }
 
-void Spectrator::initialize()
+void Kaihen::initialize()
 {
     QSettings s;
     // initialize settings if necessary
@@ -188,7 +188,7 @@ void Spectrator::initialize()
 
 }
 
-void Spectrator::selectedA(const QString &a)
+void Kaihen::selectedA(const QString &a)
 {
     ui->decayListWidget->clear();
     decays.clear();
@@ -202,7 +202,7 @@ void Spectrator::selectedA(const QString &a)
     ui->nuclideListWidget->addItems(currentMassChain->daughterNuclides());
 }
 
-void Spectrator::selectedNuclide(const QString &nuclide)
+void Kaihen::selectedNuclide(const QString &nuclide)
 {
     if (!currentMassChain)
         return;
@@ -218,7 +218,7 @@ void Spectrator::selectedNuclide(const QString &nuclide)
     }
 }
 
-void Spectrator::selectedDecay(QListWidgetItem* newitem, QListWidgetItem*)
+void Kaihen::selectedDecay(QListWidgetItem* newitem, QListWidgetItem*)
 {
     if (!newitem)
         return;
@@ -233,7 +233,7 @@ void Spectrator::selectedDecay(QListWidgetItem* newitem, QListWidgetItem*)
     updateEnergySpectrum();
 }
 
-void Spectrator::updateEnergySpectrum()
+void Kaihen::updateEnergySpectrum()
 {
     if (decay.isNull())
         return;
@@ -248,7 +248,7 @@ void Spectrator::updateEnergySpectrum()
     zoomer->setZoomBase();
 }
 
-void Spectrator::svgExport()
+void Kaihen::svgExport()
 {
     QSettings s;
 
@@ -268,7 +268,7 @@ void Spectrator::svgExport()
         svgGen.setSize(outrect.toRect().size());
         svgGen.setViewBox(outrect);
         svgGen.setTitle("Decay Level Scheme for the decay " + decay->toText());
-        svgGen.setDescription(QString::fromUtf8("This scheme was created using Spectrator (" SPECTRATORURL ")"));
+        svgGen.setDescription(QString::fromUtf8("This scheme was created using Kaihen (" KAIHENURL ")"));
 
         decay->setShadowEnabled(false);
         QPainter painter(&svgGen);
@@ -286,7 +286,7 @@ void Spectrator::svgExport()
     }
 }
 
-void Spectrator::pdfExport()
+void Kaihen::pdfExport()
 {
     QSettings s;
 
@@ -310,7 +310,7 @@ void Spectrator::pdfExport()
         p.setOutputFormat(QPrinter::PdfFormat);
         p.setPaperSize(outrect.toRect().size() / scalefactor, QPrinter::Millimeter);
         p.setDocName("Decay Level Scheme for the decay " + decay->toText());
-        p.setCreator(QString("%1 %2 (%3)").arg(QCoreApplication::applicationName(), QCoreApplication::applicationVersion(), SPECTRATORURL));
+        p.setCreator(QString("%1 %2 (%3)").arg(QCoreApplication::applicationName(), QCoreApplication::applicationVersion(), KAIHENURL));
 
         decay->setShadowEnabled(false);
         QPainter painter(&p);
@@ -328,7 +328,7 @@ void Spectrator::pdfExport()
     }
 }
 
-void Spectrator::showAll()
+void Kaihen::showAll()
 {
     if (ui->tabWidget->currentWidget() == ui->decayCascadeTab) {
         QGraphicsScene *scene = ui->decayView->scene();
@@ -342,12 +342,12 @@ void Spectrator::showAll()
     }
 }
 
-void Spectrator::showOriginalSize()
+void Kaihen::showOriginalSize()
 {
     ui->decayView->setTransform(QTransform());
 }
 
-void Spectrator::zoomIn()
+void Kaihen::zoomIn()
 {
     if (ui->tabWidget->currentWidget() == ui->decayCascadeTab) {
         ui->decayView->scale(1.25, 1.25);
@@ -366,7 +366,7 @@ void Spectrator::zoomIn()
     }
 }
 
-void Spectrator::zoomOut()
+void Kaihen::zoomOut()
 {
     if (ui->tabWidget->currentWidget() == ui->decayCascadeTab)
         ui->decayView->scale(0.8, 0.8);
@@ -374,7 +374,7 @@ void Spectrator::zoomOut()
         zoomer->zoom(-1);
 }
 
-void Spectrator::setPlotLin()
+void Kaihen::setPlotLin()
 {
     zoomer->zoom(0);
     ui->actionLogarithmic->setChecked(false);
@@ -384,7 +384,7 @@ void Spectrator::setPlotLin()
     ui->tabWidget->setCurrentWidget(ui->energySpectrumTab);
 }
 
-void Spectrator::setPlotLog()
+void Kaihen::setPlotLog()
 {
     zoomer->zoom(0);
     ui->actionLinear->setChecked(false);
@@ -394,10 +394,10 @@ void Spectrator::setPlotLog()
     ui->tabWidget->setCurrentWidget(ui->energySpectrumTab);
 }
 
-void Spectrator::showAbout()
+void Kaihen::showAbout()
 {
     QMessageBox::about(this,
                        QString("About: %1 %2").arg(QCoreApplication::applicationName(), QCoreApplication::applicationVersion()),
-                       QString::fromUtf8(SPECTRATORABOUT "<hr />" LIBAKKABOUT "<hr />" GPL)
+                       QString::fromUtf8(KAIHENABOUT "<hr />" LIBAKKABOUT "<hr />" GPL)
                        );
 }

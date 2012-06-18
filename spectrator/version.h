@@ -1,25 +1,25 @@
 #ifndef VERSION_H
 #define VERSION_H
 
-#define VERSION "1.0"
+#define VERSION "1.1"
 
-#define SPECTRATORURL "http://???.sf.net"
+#define KAIHENURL "http://???.sf.net"
 
-#define SPECTRATORABOUT "\
-<p><b>Spectrator</b></p><p>shows decay schemes, computes anisotropies of decay cascades and \
+#define KAIHENABOUT "\
+<p><b>Kaihen</b></p><p>shows decay schemes, computes anisotropies of decay cascades and \
 shows simplistic approximations of the expected energy spectra.</p> \
 \
 <p>Copyright 2012 Matthias Nagl, Georg-August Universität Göttingen</p> \
-<p><a href=\"" SPECTRATORURL "\">" SPECTRATORURL "</a></p> \
+<p><a href=\"" KAIHENURL "\">" KAIHENURL "</a></p> \
 "
 
 #define LIBAKKABOUT "\
-<p>Spectrator uses <b>libakk</b> for anisotropy calculations</p> \
+<p>Kaihen uses <b>libakk</b> for anisotropy calculations</p> \
 <p>Copyright 2012 João Guilherme Martins Correia & Marcelo Baptista Barbosa, CERN</p> \
 "
 
 #define GPL "\
-<p>Spectrator is free software: you can redistribute it and/or modify \
+<p>Kaihen is free software: you can redistribute it and/or modify \
 it under the terms of the GNU General Public License as published by \
 the Free Software Foundation, either version 3 of the License, or \
 (at your option) any later version.</p> \
