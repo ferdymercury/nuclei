@@ -267,9 +267,8 @@ void Spectrator::svgExport()
         svgGen.setFileName(fn);
         svgGen.setSize(outrect.toRect().size());
         svgGen.setViewBox(outrect);
-        svgGen.setTitle(tr("SVG Generator Example Drawing"));
-        svgGen.setDescription(tr("An SVG drawing created by the SVG Generator "
-                                 "Example provided with Qt."));
+        svgGen.setTitle("Decay Level Scheme for the decay " + decay->toText());
+        svgGen.setDescription(QString::fromUtf8("This scheme was created using Spectrator (" SPECTRATORURL ")"));
 
         decay->setShadowEnabled(false);
         QPainter painter(&svgGen);
@@ -310,6 +309,8 @@ void Spectrator::pdfExport()
         p.setPageMargins(margin, margin, margin, margin, QPrinter::Millimeter);
         p.setOutputFormat(QPrinter::PdfFormat);
         p.setPaperSize(outrect.toRect().size() / scalefactor, QPrinter::Millimeter);
+        p.setDocName("Decay Level Scheme for the decay " + decay->toText());
+        p.setCreator(QString("%1 %2 (%3)").arg(QCoreApplication::applicationName(), QCoreApplication::applicationVersion(), SPECTRATORURL));
 
         decay->setShadowEnabled(false);
         QPainter painter(&p);
