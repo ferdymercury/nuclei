@@ -45,12 +45,14 @@ QStringList ENSDF::aValues() // static
 
 QStringList ENSDF::daughterNuclides() const
 {
-    QStringList result = contents.filter("    ADOPTED LEVELS");
-    for (int i=0; i<result.size(); i++)
-        if (result[i].size() >=5)
-            result[i][4] = (result[i][4]).toLower();
+    QStringList result = contents.filter(QRegExp("^.{5,5}    .*DECAY.*$"));
+    for (int i=0; i<result.size(); i++) {
+        result[i][4] = (result[i][4]).toLower();
+        result[i] = result[i].replace(QRegExp("^\\s*([0-9]+)([A-Za-z]+).*$"), "\\2-\\1");
+    }
 
-    result.replaceInStrings(QRegExp("^\\s*([0-9]+)([A-Za-z]+).*$"), "\\2-\\1");
+    result.sort();
+    result.removeDuplicates();
     return result;
 }
 
