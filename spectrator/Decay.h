@@ -62,21 +62,21 @@ private:
     void initializeStyle();
     void processENSDFLevels() const;
     void splitAdoptedLevelsData() const; // initializes adoptblocks
-    QStringList selectAdoptedLevelsDataBlock(int64_t energy) const;
-    int64_t parseEnsdfEnergy(QString estr) const;
+    QStringList selectAdoptedLevelsDataBlock(double energy) const;
+    double parseEnsdfEnergy(QString estr) const;
     double gauss(const double x, const double sigma) const;
 
     Nuclide pNuc, dNuc;
     Type t;
 
-    int64_t parentDecayStartEnergyEv;
+    double parentDecayStartEnergyEv;
     SpinParity parentDecayStartSpin;
 
     QStringList ensdf, adopt;
-    mutable QMap<int64_t, EnergyLevel*> levels;
+    mutable QMap<double, EnergyLevel*> levels;
     QGraphicsScene *scene;
     Ui::KaihenMainWindow *ui;
-    mutable QMap<int64_t, QStringList> adoptblocks;
+    mutable QMap<double, QStringList> adoptblocks;
 
     // graphics items
     QGraphicsLineItem *pNucBaseLevel, *pNucStartLevel;
@@ -91,7 +91,7 @@ private:
     GammaTransition *firstSelectedGamma, *secondSelectedGamma;
     EnergyLevel *selectedEnergyLevel;
 
-    static const int64_t adoptedLevelMaxDifference; // maximal acceptable difference between energy levels (in eV) in decay and adopted level blocks
+    static const double adoptedLevelMaxDifference; // maximal acceptable difference between energy levels (in eV) in decay and adopted level blocks
 
     static const int primaryFontSize;
     static const double outerGammaMargin; // margin between level texts (spin, energy) and gammas

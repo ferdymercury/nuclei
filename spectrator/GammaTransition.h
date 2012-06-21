@@ -25,11 +25,11 @@ public:
         SignMagnitudeDefined = 0x3
     };
 
-    GammaTransition(int64_t energyEV, double intensity,
+    GammaTransition(double energyKeV, double intensity,
                     const QString &multipol, double delta, DeltaState deltastate,
                     EnergyLevel *start, EnergyLevel *dest);
 
-    int64_t energyEv() const;
+    double energyKeV() const;
     double intensity() const;
     QString multipolarity() const;
     double delta() const;
@@ -54,7 +54,7 @@ public:
     QPen pen() const;
 
 private:
-    int64_t e;
+    double m_e;
     double intens;
     QString m_mpol;
     double m_delta;

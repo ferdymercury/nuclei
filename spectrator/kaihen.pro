@@ -49,6 +49,8 @@ FORMS    += \
 RESOURCES += \
     kaihen.qrc
 
+#QMAKE_CXXFLAGS_DEBUG += -Wconversion
+
 # QWT ####################
 
 CONFIG += qwt

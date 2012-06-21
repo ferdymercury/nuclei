@@ -122,7 +122,7 @@ void ENSDFDownloader::setupDownload()
     connect(setui.cancelButton, SIGNAL(clicked()), &d, SLOT(reject()));
     if (d.exec() == QDialog::Accepted) {
         ftp->setTransferMode(setui.activeRadio->isChecked() ? QFtp::Active : QFtp::Passive);
-        ftp->setProxy(setui.hostEdit->text(), setui.portEdit->text().toInt());
+        ftp->setProxy(setui.hostEdit->text(), setui.portEdit->text().toShort());
     }
 }
 

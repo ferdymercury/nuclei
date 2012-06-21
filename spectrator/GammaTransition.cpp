@@ -19,20 +19,20 @@ const QPolygonF GammaTransition::arrowHeadShape = initArrowHead();
 const QPolygonF GammaTransition::arrowBaseShape = initArrowBase();
 
 
-GammaTransition::GammaTransition(int64_t energyEV, double intensity,
+GammaTransition::GammaTransition(double energyKeV, double intensity,
                                  const QString &multipol, double delta, DeltaState deltastate,
                                  EnergyLevel *start, EnergyLevel *dest)
     : ClickableItem(ClickableItem::GammaTransitionType),
-      e(energyEV), intens(intensity), m_mpol(multipol), m_delta(delta), m_deltastate(deltastate), m_start(start), m_dest(dest),
+      m_e(energyKeV), intens(intensity), m_mpol(multipol), m_delta(delta), m_deltastate(deltastate), m_start(start), m_dest(dest),
       arrow(0), text(0), arrowhead(0), arrowbase(0), clickarea(0), highlightHelper(0), mindist(0.0)
 {
     start->m_depopulatingTransitions.append(this);
     dest->m_populatingTransitions.append(this);
 }
 
-int64_t GammaTransition::energyEv() const
+double GammaTransition::energyKeV() const
 {
-    return e;
+    return m_e;
 }
 
 double GammaTransition::intensity() const
@@ -65,7 +65,7 @@ QString GammaTransition::intensityAsText() const
 
 QString GammaTransition::energyAsText() const
 {
-    return QString("%1 keV").arg(double(e)/1000.0);
+    return QString("%1 keV").arg(m_e);
 }
 
 QString GammaTransition::multipolarityAsText() const
