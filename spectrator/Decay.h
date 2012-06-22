@@ -9,13 +9,13 @@
 #include <QPen>
 #include "Nuclide.h"
 #include "SpinParity.h"
+#include "GammaTransition.h"
 
 class QGraphicsScene;
 class EnergyLevel;
 class QGraphicsLineItem;
 class QGraphicsSimpleTextItem;
 class ClickableItem;
-class GammaTransition;
 
 namespace Ui {
 class KaihenMainWindow;
@@ -64,6 +64,8 @@ private:
     void splitAdoptedLevelsData() const; // initializes adoptblocks
     QStringList selectAdoptedLevelsDataBlock(double energy) const;
     double parseEnsdfEnergy(QString estr) const;
+    double parseEnsdfMixing(const QString &s, const QString &multipolarity, GammaTransition::DeltaState *state) const;
+    template <typename T> double findNearest(const QMap<double, T> &map, double val) const;
     double gauss(const double x, const double sigma) const;
 
     Nuclide pNuc, dNuc;

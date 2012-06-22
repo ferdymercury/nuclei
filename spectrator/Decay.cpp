@@ -870,6 +870,9 @@ void Decay::processENSDFLevels() const
 
         // process new gamma
         if (!levels.isEmpty() && line.startsWith(dNuc.nucid() + "  G ")) {
+
+            Q_ASSERT(!levels.isEmpty());
+
             // determine energy
             double e = parseEnsdfEnergy(line.mid(9, 10));
 
@@ -886,27 +889,9 @@ void Decay::processENSDFLevels() const
             QString mpol(line.mid(31, 10).trimmed());
 
             // determine delta
-            QString deltastr(line.mid(41, 8).trimmed());
-            double delta = 0.0;
             GammaTransition::DeltaState deltastate = GammaTransition::UnknownDelta;
-            if (deltastr.isEmpty()) {
-                QString tmp(mpol);
-                tmp.remove('(').remove(')');
-                if (tmp.count() == 2)
-                    deltastate = GammaTransition::SignMagnitudeDefined;
-                // else leave deltastate UnknownDelta
-            }
-            else {
-                double tmp = clocale.toDouble(deltastr, &convok);
-                if (convok) {
-                    delta = tmp;
-                    if (deltastr.contains('+') || deltastr.contains('-'))
-                        deltastate = GammaTransition::SignMagnitudeDefined;
-                    else
-                        deltastate = GammaTransition::MagnitudeDefined;
-                }
-                // else leave deltastate UnknownDelta
-            }
+
+            double delta = parseEnsdfMixing(line.mid(41, 8).trimmed(), mpol, &deltastate);
 
             // parse adopted levels if necessary
             if (deltastate != GammaTransition::SignMagnitudeDefined || mpol.isEmpty()) {
@@ -915,20 +900,37 @@ void Decay::processENSDFLevels() const
                 // filter gamma records
                 QRegExp gammare("^" + dNuc.nucid() + "  G (.*)$");
                 adptlvl = adptlvl.filter(gammare);
+                // create gamma map
+                QMap<double, QString> e2g;
+                foreach (QString g, adptlvl) {
+                    double gk = clocale.toDouble(g.mid(9, 10), &convok);
+                    if (convok)
+                        e2g.insert(gk, g);
+                }
+                // find gamma
+                double gidx = findNearest(e2g, e);
+                if (std::isfinite(gidx)) {
+                    if (mpol.isEmpty())
+                        mpol = e2g.value(gidx).mid(31, 10).trimmed();
 
+                    if (deltastate != GammaTransition::SignMagnitudeDefined) {
+                        GammaTransition::DeltaState adptdeltastate = GammaTransition::UnknownDelta;
+                        double adptdelta = parseEnsdfMixing(e2g.value(gidx).mid(41, 8).trimmed(), mpol, &adptdeltastate);
+                        if (adptdeltastate > deltastate) {
+                            delta = adptdelta;
+                            deltastate = adptdeltastate;
+                        }
+                    }
+                }
             }
 
             // determine levels
             EnergyLevel *start = currentLevel;
-            double destenergy = start->energyKeV() - e;
-            QMap<double, EnergyLevel*>::iterator iDest = levels.lowerBound(destenergy);
-            EnergyLevel *dest = iDest.value();
-            if (iDest != levels.begin()) {
-                if (qAbs(destenergy - (iDest-1).key()) < qAbs(destenergy - iDest.key()))
-                    dest = (iDest-1).value();
-            }
+            double destlvlidx = findNearest(levels, start->energyKeV() - e);
+            Q_ASSERT(levels.contains(destlvlidx));
+
             // gamma registers itself with the start and dest levels
-            new GammaTransition(e, in, mpol, delta, deltastate, start, dest);
+            new GammaTransition(e, in, mpol, delta, deltastate, start, levels[destlvlidx]);
         }
         // process new level
         else if (line.startsWith(dNuc.nucid() + "  L ")) {
@@ -1073,21 +1075,16 @@ void Decay::splitAdoptedLevelsData() const
 
 QStringList Decay::selectAdoptedLevelsDataBlock(double energy) const
 {
-    QMap<double, QStringList>::const_iterator ial = adoptblocks.lowerBound(energy);
-    QStringList adptblock(ial.value()); // strings belonging to the adopted levels record
-    if (ial.key() != energy) {
-        // test if item before is closer to e
-        if (ial != adoptblocks.begin()) {
-            if (qAbs(energy - (ial-1).key()) < qAbs(energy - ial.key())) {
-                ial--;
-                adptblock = ial.value();
-            }
-        }
-    }
-    if (qAbs(energy - ial.key()) > adoptedLevelMaxDifference)
-        adptblock = QStringList();
+    double idx = findNearest(adoptblocks, energy);
+    if (!std::isfinite(idx))
+        return QStringList();
 
-    return adptblock;
+    Q_ASSERT(adoptblocks.contains(idx));
+
+    if (qAbs(energy - idx) > adoptedLevelMaxDifference)
+        return QStringList();
+
+    return adoptblocks.value(idx);
 }
 
 double Decay::parseEnsdfEnergy(QString estr) const
@@ -1095,6 +1092,49 @@ double Decay::parseEnsdfEnergy(QString estr) const
     QLocale clocale("C");
     estr.remove('(').remove(')');
     return clocale.toDouble(estr.trimmed());
+}
+
+double Decay::parseEnsdfMixing(const QString &str, const QString &multipolarity, GammaTransition::DeltaState *state) const
+{
+    QLocale clocale("C");
+    bool convok = false;
+    double delta = 0.0;
+    if (str.isEmpty()) {
+        QString tmp(multipolarity);
+        tmp.remove('(').remove(')');
+        if (tmp.count() == 2)
+            *state = GammaTransition::SignMagnitudeDefined;
+        // else leave deltastate UnknownDelta
+    }
+    else {
+        double tmp = clocale.toDouble(str, &convok);
+        if (convok) {
+            delta = tmp;
+            if (str.contains('+') || str.contains('-'))
+                *state = GammaTransition::SignMagnitudeDefined;
+            else
+                *state = GammaTransition::MagnitudeDefined;
+        }
+        // else leave deltastate UnknownDelta
+    }
+    return delta;
+}
+
+template <typename T>
+double Decay::findNearest(const QMap<double, T> &map, double val) const
+{
+    if (map.isEmpty())
+        return std::numeric_limits<double>::quiet_NaN();
+
+    typename QMap<double, T>::const_iterator i = map.lowerBound(val);
+
+    if (i == map.begin())
+        return i.key();
+
+    if (qAbs(val - (i-1).key()) < qAbs(val - i.key()))
+        return (i-1).key();
+
+    return i.key();
 }
 
 double Decay::gauss(const double x, const double sigma) const
