@@ -16,9 +16,6 @@
 #include "ui_Kaihen.h"
 #include "Kaihen.h"
 
-const double Decay::adoptedLevelMaxDifference = 100;
-
-const int Decay::primaryFontSize = 14;
 const double Decay::outerGammaMargin = 50.0;
 const double Decay::outerLevelTextMargin = 4.0; // level lines extend beyond the beginning/end of the level texts by this value
 const double Decay::maxExtraLevelDistance = 120.0;
@@ -48,7 +45,8 @@ Decay::Decay(const QStringList &ensdfData, const QStringList &ensdfAdoptedLevels
     : QObject(parent),
       parentDecayStartEnergyEv(0.0),
       ensdf(ensdfData), adopt(ensdfAdoptedLevels), scene(0), ui(0),
-      firstSelectedGamma(0), secondSelectedGamma(0), selectedEnergyLevel(0)
+      firstSelectedGamma(0), secondSelectedGamma(0), selectedEnergyLevel(0),
+      adoptedLevelMaxDifference(1.0), gammaMaxDifference(1.0)
 {
     Q_ASSERT(!ensdf.isEmpty());
 
@@ -121,9 +119,8 @@ QString Decay::decayTypeAsText() const
 
 QGraphicsScene * Decay::levelPlot()
 {
-    initializeStyle();
-
     if (!scene) {
+
         processENSDFLevels();
 
         scene = new QGraphicsScene(this);
@@ -819,20 +816,27 @@ void Decay::alignGraphicsItems()
     }
 }
 
-void Decay::initializeStyle()
+void Decay::setStyle(const QFont &fontfamily, unsigned int sizePx)
 {
     // prepare fonts and their metrics
-    stdFont.setPixelSize(primaryFontSize);
-    stdBoldFont.setPixelSize(primaryFontSize);
+    stdFont = fontfamily;
+    stdFont.setPixelSize(sizePx);
+    stdBoldFont = fontfamily;
+    stdBoldFont.setPixelSize(sizePx);
     stdBoldFont.setBold(true);
-    nucFont.setPixelSize(primaryFontSize * 20 / 10);
+    nucFont = fontfamily;
+    nucFont.setPixelSize(sizePx * 20 / 10);
     nucFont.setBold(true);
-    nucIndexFont.setPixelSize(primaryFontSize * 12 / 10);
+    nucIndexFont = fontfamily;
+    nucIndexFont.setPixelSize(sizePx * 12 / 10);
     nucIndexFont.setBold(true);
-    parentHlFont.setPixelSize(primaryFontSize * 12 / 10);
-    feedIntensityFont.setPixelSize(primaryFontSize);
+    parentHlFont = fontfamily;
+    parentHlFont.setPixelSize(sizePx * 12 / 10);
+    feedIntensityFont = fontfamily;
+    feedIntensityFont.setPixelSize(sizePx);
     feedIntensityFont.setItalic(true);
-    gammaFont.setPixelSize(primaryFontSize);
+    gammaFont = fontfamily;
+    gammaFont.setPixelSize(sizePx);
 
     // prepare pens
     levelPen.setWidthF(1.0);
@@ -849,6 +853,12 @@ void Decay::initializeStyle()
     intenseGammaPen.setWidthF(2.0);
     intenseGammaPen.setColor(QColor(232, 95, 92));
     intenseGammaPen.setCapStyle(Qt::FlatCap);
+}
+
+void Decay::setFuzzyLimits(double levelLimit, double gammaLimit)
+{
+    adoptedLevelMaxDifference = levelLimit;
+    gammaMaxDifference = gammaLimit;
 }
 
 void Decay::processENSDFLevels() const
@@ -909,7 +919,7 @@ void Decay::processENSDFLevels() const
                 }
                 // find gamma
                 double gidx = findNearest(e2g, e);
-                if (std::isfinite(gidx)) {
+                if ((e-gidx < gammaMaxDifference/1000.0*e) && std::isfinite(gidx)) {
                     if (mpol.isEmpty())
                         mpol = e2g.value(gidx).mid(31, 10).trimmed();
 
@@ -956,7 +966,7 @@ void Decay::processENSDFLevels() const
             // if an appropriate entry was found, read its contents
             // set half life if necessary
             if (!adptlvl.isEmpty() && !hl.isValid())
-                hl = HalfLife(adopt.at(0).mid(39, 10));
+                hl = HalfLife(adptlvl.at(0).mid(39, 10));
 
             // parse continuation records
             // fetch records
@@ -1081,7 +1091,7 @@ QStringList Decay::selectAdoptedLevelsDataBlock(double energy) const
 
     Q_ASSERT(adoptblocks.contains(idx));
 
-    if (qAbs(energy - idx) > adoptedLevelMaxDifference)
+    if (qAbs(energy - idx) > (adoptedLevelMaxDifference/1000.0*energy))
         return QStringList();
 
     return adoptblocks.value(idx);

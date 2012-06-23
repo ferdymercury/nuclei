@@ -6,6 +6,7 @@
 
 namespace Ui {
 class KaihenMainWindow;
+class PreferencesDialog;
 }
 class ENSDF;
 class QListWidgetItem;
@@ -42,10 +43,13 @@ private slots:
     void setPlotLin();
     void setPlotLog();
 
+    void showPreferences();
     void showAbout();
     
 private:
     Ui::KaihenMainWindow *ui;
+    QDialog *pdd;
+    Ui::PreferencesDialog *pd;
 
     ENSDF *currentMassChain;
     QList< QSharedPointer<Decay> > decays;

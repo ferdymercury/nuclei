@@ -1,5 +1,6 @@
 #include "Kaihen.h"
 #include "ui_Kaihen.h"
+#include "ui_PreferencesDialog.h"
 
 #include <QResizeEvent>
 #include <QDoubleSpinBox>
@@ -43,10 +44,13 @@ protected:
 Kaihen::Kaihen(QWidget *parent) :
     QMainWindow(parent),
     ui(new Ui::KaihenMainWindow),
+    pdd(new QDialog(this)), pd(new Ui::PreferencesDialog),
     currentMassChain(0), zoomer(0)
 {
     ui->setupUi(this);
     setWindowTitle(QCoreApplication::applicationName() + QString(" ") + QCoreApplication::applicationVersion());
+
+    pd->setupUi(pdd);
 
     // add toolbar widgets
     eres = new QDoubleSpinBox(ui->mainToolBar);
@@ -102,6 +106,7 @@ Kaihen::Kaihen(QWidget *parent) :
     connect(ui->actionLinear, SIGNAL(triggered()), this, SLOT(setPlotLin()));
     connect(ui->actionLogarithmic, SIGNAL(triggered()), this, SLOT(setPlotLog()));
 
+    connect(ui->actionPreferences, SIGNAL(triggered()), this, SLOT(showPreferences()));
     connect(ui->actionAbout, SIGNAL(triggered()), this, SLOT(showAbout()));
 
     ui->decayView->setRenderHints(QPainter::Antialiasing | QPainter::TextAntialiasing);
@@ -113,6 +118,13 @@ Kaihen::Kaihen(QWidget *parent) :
 Kaihen::~Kaihen()
 {
     QSettings s;
+
+    s.beginGroup("preferences");
+    s.setValue("fontFamily", pd->fontFamily->currentFont().family());
+    s.setValue("fontSize", pd->fontSize->value());
+    s.setValue("levelTolerance", pd->levelDiff->value());
+    s.setValue("gammaTolerance", pd->gammaDiff->value());
+    s.endGroup();
 
     s.setValue("activeTab", (ui->tabWidget->currentWidget() == ui->decayCascadeTab) ? "decay" : "energy");
 
@@ -132,6 +144,7 @@ Kaihen::~Kaihen()
     if (decayItem)
         s.setValue("selectedDecay", decayItem->text());
 
+    delete pd;
     delete ui;
 }
 
@@ -141,6 +154,13 @@ void Kaihen::initialize()
     // initialize settings if necessary
     if (!s.contains("exportDir"))
         s.setValue("exportDir", QDir::homePath());
+
+    s.beginGroup("preferences");
+    pd->fontFamily->setCurrentFont(QFont(s.value("fontFamily", QFont().family()).toString()));
+    pd->fontSize->setValue(s.value("fontSize", 14).toInt());
+    pd->levelDiff->setValue(s.value("levelTolerance", 1.0).toDouble());
+    pd->gammaDiff->setValue(s.value("gammaTolerance", 1.0).toDouble());
+    s.endGroup();
 
     // load available mass numbers (i.e. search for available ENSDF files)
     QStringList a(ENSDF::aValues());
@@ -225,6 +245,8 @@ void Kaihen::selectedDecay(QListWidgetItem* newitem, QListWidgetItem*)
 
     decay = newitem->data(Qt::UserRole).value< QSharedPointer<Decay> >();
     decay->setUpdateableUi(ui);
+    decay->setStyle(pd->fontFamily->currentFont(), pd->fontSize->value());
+    decay->setFuzzyLimits(pd->levelDiff->value(), pd->gammaDiff->value());
     QGraphicsScene *scene = decay->levelPlot();
     ui->decayView->setScene(scene);
     ui->decayView->setSceneRect(scene->sceneRect().adjusted(-20, -20, 20, 20));
@@ -392,6 +414,33 @@ void Kaihen::setPlotLog()
     plot->setAxisScale(QwtPlot::yLeft, 1E-8, 10.0);
     zoomer->setZoomBase();
     ui->tabWidget->setCurrentWidget(ui->energySpectrumTab);
+}
+
+void Kaihen::showPreferences()
+{
+    pdd->exec();
+
+    // save current selection
+    QString aString, nuclideString, decayString;
+    QListWidgetItem * aItem = ui->aListWidget->currentItem();
+    if (aItem)
+        aString = aItem->text();
+    QListWidgetItem * nuclideItem = ui->nuclideListWidget->currentItem();
+    if (nuclideItem)
+        nuclideString = nuclideItem->text();
+    QListWidgetItem * decayItem = ui->decayListWidget->currentItem();
+    if (decayItem)
+        decayString = decayItem->text();
+
+    selectedA(aString);
+
+    QList<QListWidgetItem*> nuclideItems(ui->nuclideListWidget->findItems(nuclideString, Qt::MatchExactly));
+    if (!nuclideItems.isEmpty())
+        ui->nuclideListWidget->setCurrentItem(nuclideItems.at(0));
+
+    QList<QListWidgetItem*> decayItems(ui->decayListWidget->findItems(decayString, Qt::MatchExactly));
+    if (!decayItems.isEmpty())
+        ui->decayListWidget->setCurrentItem(decayItems.at(0));
 }
 
 void Kaihen::showAbout()

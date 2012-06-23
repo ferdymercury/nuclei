@@ -44,7 +44,8 @@ LIBS += -lquazip
 FORMS    += \
     ENSDFDownloader.ui \
     ENSDFDownloaderSettings.ui \
-    Kaihen.ui
+    Kaihen.ui \
+    PreferencesDialog.ui
 
 RESOURCES += \
     kaihen.qrc

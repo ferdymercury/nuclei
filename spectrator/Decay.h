@@ -39,7 +39,11 @@ public:
     ~Decay();
 
     QString decayTypeAsText() const;
+
+    void setStyle(const QFont &fontfamily, unsigned int sizePx);
+    void setFuzzyLimits(double levelLimit, double gammaLimit);
     QGraphicsScene * levelPlot();
+
     void setUpdateableUi(Ui::KaihenMainWindow *updui);
     void setShadowEnabled(bool enable);
 
@@ -59,7 +63,6 @@ private:
     void updateDecayDataLabels();
     void resetAnisotropyLabels();
     void alignGraphicsItems();
-    void initializeStyle();
     void processENSDFLevels() const;
     void splitAdoptedLevelsData() const; // initializes adoptblocks
     QStringList selectAdoptedLevelsDataBlock(double energy) const;
@@ -93,9 +96,9 @@ private:
     GammaTransition *firstSelectedGamma, *secondSelectedGamma;
     EnergyLevel *selectedEnergyLevel;
 
-    static const double adoptedLevelMaxDifference; // maximal acceptable difference between energy levels (in eV) in decay and adopted level blocks
+    double adoptedLevelMaxDifference; // maximal acceptable difference between energy levels (in eV) in decay and adopted level blocks
+    double gammaMaxDifference; // maximal difference between the energy of gammas in decay records and adopted levels
 
-    static const int primaryFontSize;
     static const double outerGammaMargin; // margin between level texts (spin, energy) and gammas
     static const double outerLevelTextMargin; // level lines extend beyond the beginning/end of the level texts by this value
     static const double maxExtraLevelDistance; // maximal additional distance between two level lines
