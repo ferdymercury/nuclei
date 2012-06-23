@@ -72,7 +72,7 @@ Decay::Decay(const QStringList &ensdfData, const QStringList &ensdfAdoptedLevels
     // parse information from parent record
     HalfLife hl;
     QString pa, pn;
-    int pidx = ensdf.indexOf(QRegExp("^[\\s0-9A-Z]{5,5}\\s\\sP\\s.*$"));
+    int pidx = ensdf.indexOf(QRegExp("^[\\s0-9A-Z]{5,5}\\s\\sP[\\s0-9].*$"));
     if (pidx > 0) {
         QString prec(ensdf.at(pidx));
         // determine parent data
