@@ -44,13 +44,10 @@ LIBS += -lquazip
 FORMS    += \
     ENSDFDownloader.ui \
     ENSDFDownloaderSettings.ui \
-    Kaihen.ui \
-    PreferencesDialog.ui
+    Kaihen.ui
 
 RESOURCES += \
     kaihen.qrc
-
-#QMAKE_CXXFLAGS_DEBUG += -Wconversion
 
 # QWT ####################
 

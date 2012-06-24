@@ -20,7 +20,7 @@ class GammaTransition;
 class EnergyLevel : public ClickableItem
 {
 public:
-    EnergyLevel(double energyKeV, SpinParity spin,
+    EnergyLevel(int64_t energyEV, SpinParity spin,
                 HalfLife halfLife = HalfLife(std::numeric_limits<double>::infinity()),
                 unsigned int isomerNum = 0,
                 double Q = std::numeric_limits<double>::quiet_NaN(),
@@ -29,7 +29,7 @@ public:
 
     ~EnergyLevel();
 
-    double energyKeV() const;
+    int64_t energyEv() const;
     SpinParity spin() const;
     HalfLife halfLife() const;
     unsigned int isomerNum() const;
@@ -48,7 +48,7 @@ public:
 private:
     static bool gammaSmallerThan(const GammaTransition * const g1, const GammaTransition * const g2);
 
-    double m_e;
+    int64_t e;
     SpinParity sp;
     HalfLife hl;
     unsigned int isonum; // >0 for isomeric levels (counted from low energy to high), 0 otherwise

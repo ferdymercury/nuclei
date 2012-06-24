@@ -864,7 +864,7 @@
    <addaction name="actionLinear"/>
    <addaction name="actionLogarithmic"/>
   </widget>
-  <widget class="QToolBar" name="extrasBar">
+  <widget class="QToolBar" name="aboutBar">
    <property name="windowTitle">
     <string>About Tool Bar</string>
    </property>
@@ -874,7 +874,6 @@
    <attribute name="toolBarBreak">
     <bool>false</bool>
    </attribute>
-   <addaction name="actionPreferences"/>
    <addaction name="actionAbout"/>
   </widget>
   <action name="actionZoom_In">
@@ -993,18 +992,6 @@
    </property>
    <property name="toolTip">
     <string>Export as PDF File</string>
-   </property>
-  </action>
-  <action name="actionPreferences">
-   <property name="icon">
-    <iconset resource="kaihen.qrc">
-     <normaloff>:/configure.png</normaloff>:/configure.png</iconset>
-   </property>
-   <property name="text">
-    <string>Preferences</string>
-   </property>
-   <property name="toolTip">
-    <string>Change application preferences</string>
    </property>
   </action>
  </widget>

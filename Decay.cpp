@@ -16,6 +16,7 @@
 #include "ui_Kaihen.h"
 #include "Kaihen.h"
 
+const int Decay::primaryFontSize = 14;
 const double Decay::outerGammaMargin = 50.0;
 const double Decay::outerLevelTextMargin = 4.0; // level lines extend beyond the beginning/end of the level texts by this value
 const double Decay::maxExtraLevelDistance = 120.0;
@@ -31,7 +32,9 @@ const double Decay::highlightWidth = 5.0;
 
 Decay::Decay(Nuclide parentNuclide, Nuclide daughterNuclide, Type decayType, QObject *parent)
     : QObject(parent), pNuc(parentNuclide), dNuc(daughterNuclide), t(decayType),
-      parentDecayStartEnergyEv(0.0),
+      parentDecayStartEnergyEv(0),
+      normalizeDecIntensToPercentParentDecay(1.0),
+      normalizeGammaIntensToPercentParentDecay(1.0),
       scene(0), ui(0),
       pNucBaseLevel(0), pNucStartLevel(0), pNucVerticalArrow(0), pNucHl(0), pNucBaseEnergy(0), pNucEnergy(0), pNucSpin(0),
       firstSelectedGamma(0), secondSelectedGamma(0), selectedEnergyLevel(0)
@@ -43,10 +46,11 @@ Decay::Decay(Nuclide parentNuclide, Nuclide daughterNuclide, Type decayType, QOb
  */
 Decay::Decay(const QStringList &ensdfData, const QStringList &ensdfAdoptedLevels, QObject *parent)
     : QObject(parent),
-      parentDecayStartEnergyEv(0.0),
+      parentDecayStartEnergyEv(0),
+      normalizeDecIntensToPercentParentDecay(1.0),
+      normalizeGammaIntensToPercentParentDecay(1.0),
       ensdf(ensdfData), adopt(ensdfAdoptedLevels), scene(0), ui(0),
-      firstSelectedGamma(0), secondSelectedGamma(0), selectedEnergyLevel(0),
-      adoptedLevelMaxDifference(1.0), gammaMaxDifference(1.0)
+      firstSelectedGamma(0), secondSelectedGamma(0), selectedEnergyLevel(0)
 {
     Q_ASSERT(!ensdf.isEmpty());
 
@@ -70,7 +74,7 @@ Decay::Decay(const QStringList &ensdfData, const QStringList &ensdfAdoptedLevels
     // parse information from parent record
     HalfLife hl;
     QString pa, pn;
-    int pidx = ensdf.indexOf(QRegExp("^[\\s0-9A-Z]{5,5}\\s\\sP[\\s0-9].*$"));
+    int pidx = ensdf.indexOf(QRegExp("^[\\s0-9A-Z]{5,5}\\s\\sP\\s.*$"));
     if (pidx > 0) {
         QString prec(ensdf.at(pidx));
         // determine parent data
@@ -119,8 +123,9 @@ QString Decay::decayTypeAsText() const
 
 QGraphicsScene * Decay::levelPlot()
 {
-    if (!scene) {
+    initializeStyle();
 
+    if (!scene) {
         processENSDFLevels();
 
         scene = new QGraphicsScene(this);
@@ -249,14 +254,14 @@ QGraphicsScene * Decay::levelPlot()
             pNucSpin->setFont(stdBoldFont);
             scene->addItem(pNucSpin);
 
-            if (parentDecayStartEnergyEv > 0.0) {
+            if (parentDecayStartEnergyEv) {
                 // parent's start level line
                 pNucStartLevel = new QGraphicsLineItem;
                 pNucStartLevel->setPen(stableLevelPen);
                 scene->addItem(pNucStartLevel);
 
                 // parent's start level energy
-                pNucEnergy = new QGraphicsSimpleTextItem(QString("%1 keV").arg(parentDecayStartEnergyEv));
+                pNucEnergy = new QGraphicsSimpleTextItem(QString("%1 keV").arg(double(parentDecayStartEnergyEv)/1000.0));
                 pNucEnergy->setFont(stdBoldFont);
                 scene->addItem(pNucEnergy);
             }
@@ -296,11 +301,11 @@ QString Decay::toText() const
 QVector<QPointF> Decay::gammaSpectrum(double fwhm) const
 {
     // collect gammas
-    QMap<double, double> gammas;
+    QMap<int64_t, double> gammas;
     foreach (EnergyLevel *level, levels)
         foreach (GammaTransition *g, level->depopulatingTransitions())
             if (std::isfinite(g->intensity()))
-                gammas.insert(g->energyKeV(), g->intensity());
+                gammas.insert(g->energyEv(), g->intensity());
 
     // determine highest energy
     double max = 0.0;
@@ -311,14 +316,14 @@ QVector<QPointF> Decay::gammaSpectrum(double fwhm) const
     double sigma = fwhm / (2.0*sqrt(2.0*M_LN2));
     double var = sigma * sigma;
 
-    // create result vector (on interval [0, max+2*fwhm], stepwidth: 2keV)
-    QVector<QPointF> result(std::ceil(max/2.) + qRound(2.0*fwhm));
+    // create result vector (on interval [0, max+2*fwhm], stepwidth: 2)
+    QVector<QPointF> result((max/1000+1 + qRound(2.0*fwhm))/2+1);
 
     // compute values
     for (int i=0; i<result.size(); i++) {
         result[i].setX(double(i*2+1));
-        for (QMap<double, double>::const_iterator gamma=gammas.begin(); gamma!=gammas.end(); gamma++) {
-            double eGamma = gamma.key();
+        for (QMap<int64_t, double>::const_iterator gamma=gammas.begin(); gamma!=gammas.end(); gamma++) {
+            double eGamma = double(gamma.key())/1000.0;
             result[i].ry() += gamma.value() * gauss(result[i].x() - eGamma, sqrt(eGamma/662.0*var));
         }
     }
@@ -653,13 +658,13 @@ void Decay::alignGraphicsItems()
 
     // determine y coordinates for all levels
     double maxEnergyGap = 0.0;
-    for (QMap<double, EnergyLevel*>::const_iterator i=levels.begin()+1; i!=levels.end(); i++) {
-        double diff = i.key() - (i-1).key();
+    for (QMap<int64_t, EnergyLevel*>::const_iterator i=levels.begin()+1; i!=levels.end(); i++) {
+        double diff = double(i.key()) - double((i-1).key());
         maxEnergyGap = qMax(maxEnergyGap, diff);
     }
-    for (QMap<double, EnergyLevel*>::const_iterator i=levels.begin()+1; i!=levels.end(); i++) {
+    for (QMap<int64_t, EnergyLevel*>::const_iterator i=levels.begin()+1; i!=levels.end(); i++) {
         double minheight = 0.5*(i.value()->item->boundingRect().height() + (i-1).value()->item->boundingRect().height());
-        double extraheight = maxExtraLevelDistance * (i.key() - (i-1).key()) / maxEnergyGap;
+        double extraheight = maxExtraLevelDistance * (double(i.key()) - double((i-1).key())) / maxEnergyGap;
         i.value()->graYPos = std::floor((i-1).value()->graYPos - minheight - extraheight) + 0.5*i.value()->graline->pen().widthF();
     }
 
@@ -759,7 +764,7 @@ void Decay::alignGraphicsItems()
 
     // set position of parent nuclide
     if (parentpos == LeftParent || parentpos == RightParent) {
-        double maxEnergy = (levels.end()-1).key();
+        int64_t maxEnergy = (levels.end()-1).key();
         double parentY = 0.0;
         if (!levels.isEmpty())
             parentY = levels.value(maxEnergy)->item->y() -
@@ -792,7 +797,7 @@ void Decay::alignGraphicsItems()
 
         double topMostLevel = y;
 
-        if (parentDecayStartEnergyEv > 0.0) {
+        if (parentDecayStartEnergyEv) {
             baseleft = normalleft;
             baseright = normalright;
             startleft = activeleft;
@@ -816,27 +821,20 @@ void Decay::alignGraphicsItems()
     }
 }
 
-void Decay::setStyle(const QFont &fontfamily, unsigned int sizePx)
+void Decay::initializeStyle()
 {
     // prepare fonts and their metrics
-    stdFont = fontfamily;
-    stdFont.setPixelSize(sizePx);
-    stdBoldFont = fontfamily;
-    stdBoldFont.setPixelSize(sizePx);
+    stdFont.setPixelSize(primaryFontSize);
+    stdBoldFont.setPixelSize(primaryFontSize);
     stdBoldFont.setBold(true);
-    nucFont = fontfamily;
-    nucFont.setPixelSize(sizePx * 20 / 10);
+    nucFont.setPixelSize(primaryFontSize * 20 / 10);
     nucFont.setBold(true);
-    nucIndexFont = fontfamily;
-    nucIndexFont.setPixelSize(sizePx * 12 / 10);
+    nucIndexFont.setPixelSize(primaryFontSize * 12 / 10);
     nucIndexFont.setBold(true);
-    parentHlFont = fontfamily;
-    parentHlFont.setPixelSize(sizePx * 12 / 10);
-    feedIntensityFont = fontfamily;
-    feedIntensityFont.setPixelSize(sizePx);
+    parentHlFont.setPixelSize(primaryFontSize * 12 / 10);
+    feedIntensityFont.setPixelSize(primaryFontSize);
     feedIntensityFont.setItalic(true);
-    gammaFont = fontfamily;
-    gammaFont.setPixelSize(sizePx);
+    gammaFont.setPixelSize(primaryFontSize);
 
     // prepare pens
     levelPen.setWidthF(1.0);
@@ -855,16 +853,9 @@ void Decay::setStyle(const QFont &fontfamily, unsigned int sizePx)
     intenseGammaPen.setCapStyle(Qt::FlatCap);
 }
 
-void Decay::setFuzzyLimits(double levelLimit, double gammaLimit)
-{
-    adoptedLevelMaxDifference = levelLimit;
-    gammaMaxDifference = gammaLimit;
-}
-
 void Decay::processENSDFLevels() const
 {
-    double normalizeDecIntensToPercentParentDecay = 1.0;
-    double normalizeGammaIntensToPercentParentDecay = 1.0;
+    const int64_t adoptedLevelMaxDistance = 100; // maximal acceptable distance between energy levels (in eV) in decay and adopted level blocks
 
     if (!levels.isEmpty())
         return;
@@ -874,17 +865,20 @@ void Decay::processENSDFLevels() const
     QLocale clocale("C");
     bool convok;
 
-    splitAdoptedLevelsData();
+    // create index for adopted levels
+    QMap<int64_t, int> alEnergy2Idx;
+    for (int i=0; i < adopt.size(); i++) {
+        const QString &line = adopt.at(i);
+        if (line.startsWith(dNuc.nucid() + "  L "))
+            alEnergy2Idx.insert(parseEnsdfEnergy(line.mid(9, 10)), i);
+    }
 
     foreach (const QString &line, ensdf) {
 
         // process new gamma
         if (!levels.isEmpty() && line.startsWith(dNuc.nucid() + "  G ")) {
-
-            Q_ASSERT(!levels.isEmpty());
-
             // determine energy
-            double e = parseEnsdfEnergy(line.mid(9, 10));
+            int64_t e = parseEnsdfEnergy(line.mid(9, 10));
 
             // determine intensity
             QString instr(line.mid(21,8));
@@ -899,53 +893,44 @@ void Decay::processENSDFLevels() const
             QString mpol(line.mid(31, 10).trimmed());
 
             // determine delta
+            QString deltastr(line.mid(41, 8).trimmed());
+            double delta = 0.0;
             GammaTransition::DeltaState deltastate = GammaTransition::UnknownDelta;
-
-            double delta = parseEnsdfMixing(line.mid(41, 8).trimmed(), mpol, &deltastate);
-
-            // parse adopted levels if necessary
-            if (deltastate != GammaTransition::SignMagnitudeDefined || mpol.isEmpty()) {
-                // Get adopted levels block for current level
-                QStringList adptlvl(selectAdoptedLevelsDataBlock(currentLevel->energyKeV()));
-                // filter gamma records
-                QRegExp gammare("^" + dNuc.nucid() + "  G (.*)$");
-                adptlvl = adptlvl.filter(gammare);
-                // create gamma map
-                QMap<double, QString> e2g;
-                foreach (QString g, adptlvl) {
-                    double gk = clocale.toDouble(g.mid(9, 10), &convok);
-                    if (convok)
-                        e2g.insert(gk, g);
+            if (deltastr.isEmpty()) {
+                QString tmp(mpol);
+                tmp.remove('(').remove(')');
+                if (tmp.count() == 2)
+                    deltastate = GammaTransition::SignMagnitudeDefined;
+                // else leave deltastate UnknownDelta
+            }
+            else {
+                double tmp = clocale.toDouble(deltastr, &convok);
+                if (convok) {
+                    delta = tmp;
+                    if (deltastr.contains('+') || deltastr.contains('-'))
+                        deltastate = GammaTransition::SignMagnitudeDefined;
+                    else
+                        deltastate = GammaTransition::MagnitudeDefined;
                 }
-                // find gamma
-                double gidx = findNearest(e2g, e);
-                if ((e-gidx < gammaMaxDifference/1000.0*e) && std::isfinite(gidx)) {
-                    if (mpol.isEmpty())
-                        mpol = e2g.value(gidx).mid(31, 10).trimmed();
-
-                    if (deltastate != GammaTransition::SignMagnitudeDefined) {
-                        GammaTransition::DeltaState adptdeltastate = GammaTransition::UnknownDelta;
-                        double adptdelta = parseEnsdfMixing(e2g.value(gidx).mid(41, 8).trimmed(), mpol, &adptdeltastate);
-                        if (adptdeltastate > deltastate) {
-                            delta = adptdelta;
-                            deltastate = adptdeltastate;
-                        }
-                    }
-                }
+                // else leave deltastate UnknownDelta
             }
 
             // determine levels
             EnergyLevel *start = currentLevel;
-            double destlvlidx = findNearest(levels, start->energyKeV() - e);
-            Q_ASSERT(levels.contains(destlvlidx));
-
+            int64_t destenergy = start->energyEv() - e;
+            QMap<int64_t, EnergyLevel*>::iterator iDest = levels.lowerBound(destenergy);
+            EnergyLevel *dest = iDest.value();
+            if (iDest != levels.begin()) {
+                if (qAbs(destenergy - (iDest-1).key()) < qAbs(destenergy - iDest.key()))
+                    dest = (iDest-1).value();
+            }
             // gamma registers itself with the start and dest levels
-            new GammaTransition(e, in, mpol, delta, deltastate, start, levels[destlvlidx]);
+            new GammaTransition(e, in, mpol, delta, deltastate, start, dest);
         }
         // process new level
         else if (line.startsWith(dNuc.nucid() + "  L ")) {
             // determine energy
-            double e = parseEnsdfEnergy(line.mid(9, 10));
+            int64_t e = parseEnsdfEnergy(line.mid(9, 10));
             // determine spin
             SpinParity spin(line.mid(21, 18));
             // determine isomer number
@@ -955,43 +940,54 @@ void Decay::processENSDFLevels() const
                 isonum = 1;
             // determine half-life
             HalfLife hl(line.mid(39, 10));
-
             // get additional data from adopted leves record
             //   find closest entry
             double Q = std::numeric_limits<double>::quiet_NaN();
             double mu = std::numeric_limits<double>::quiet_NaN();
 
-            QStringList adptlvl(selectAdoptedLevelsDataBlock(e));
+            int alidx = -1; // line no. of the closest entry
+            QMap<int64_t, int>::const_iterator ial = alEnergy2Idx.lowerBound(e);
+            if (qAbs(e - ial.key()) <= adoptedLevelMaxDistance)
+                alidx = ial.value();
+            if (ial.key() != e) {
+                // test if item before is closer to e
+                if (ial != alEnergy2Idx.begin()) {
+                    if (qAbs(e - (ial-1).key()) < qAbs(e - ial.key()) && qAbs(e - (ial-1).key()) <= adoptedLevelMaxDistance)
+                        alidx = (ial-1).value();
+                }
+            }
 
             // if an appropriate entry was found, read its contents
-            // set half life if necessary
-            if (!adptlvl.isEmpty() && !hl.isValid())
-                hl = HalfLife(adptlvl.at(0).mid(39, 10));
-
-            // parse continuation records
-            // fetch records
-            QRegExp crecre("^" + dNuc.nucid() + "[A-RT-Z0-9] L (.*)$");
-            QStringList crecs(adptlvl.filter(crecre));
-            // remove record id
-            crecs.replaceInStrings(crecre, "\\1");
-            // join lines and then split records
-            QString tmp(crecs.join("$"));
-            crecs = tmp.split('$');
-            for (int i=0; i<crecs.size(); i++)
-                crecs[i] = crecs[i].trimmed();
-            // search and parse Q and µ fields
-            // Q
-            QString qstr(crecs.value(crecs.indexOf(QRegExp("^MOME2.*$"))));
-            qstr.replace(QRegExp("^MOME2\\s*=\\s*([\\S]+).*"), "\\1");
-            Q = clocale.toDouble(qstr, &convok);
-            if (!convok)
-                Q = std::numeric_limits<double>::quiet_NaN();
-            // µ
-            QString mustr(crecs.value(crecs.indexOf(QRegExp("^MOMM1.*$"))));
-            mustr.replace(QRegExp("^MOMM1\\s*=\\s*([\\S]+).*"), "\\1");
-            mu = clocale.toDouble(mustr, &convok);
-            if (!convok)
-                mu = std::numeric_limits<double>::quiet_NaN();
+            if (alidx >= 0) {
+                if (!hl.isValid())
+                    hl = HalfLife(adopt.at(alidx).mid(39, 10));
+                // parse continuation records
+                // fetch records
+                QStringList crecs;
+                QRegExp crecre("^" + dNuc.nucid() + "[A-RT-Z0-9] L (.*)$");
+                for (int i=alidx+1; adopt.value(i).contains(crecre); i++)
+                    crecs.append(adopt.value(i));
+                // remove record id
+                crecs.replaceInStrings(crecre, "\\1");
+                // join lines and then split records
+                QString tmp(crecs.join("$"));
+                crecs = tmp.split('$');
+                for (int i=0; i<crecs.size(); i++)
+                    crecs[i] = crecs[i].trimmed();
+                // search and parse Q and µ fields
+                // Q
+                QString qstr(crecs.value(crecs.indexOf(QRegExp("^MOME2.*$"))));
+                qstr.replace(QRegExp("^MOME2\\s*=\\s*([\\S]+).*"), "\\1");
+                Q = clocale.toDouble(qstr, &convok);
+                if (!convok)
+                    Q = std::numeric_limits<double>::quiet_NaN();
+                // µ
+                QString mustr(crecs.value(crecs.indexOf(QRegExp("^MOMM1.*$"))));
+                mustr.replace(QRegExp("^MOMM1\\s*=\\s*([\\S]+).*"), "\\1");
+                mu = clocale.toDouble(mustr, &convok);
+                if (!convok)
+                    mu = std::numeric_limits<double>::quiet_NaN();
+            }
 
             currentLevel = new EnergyLevel(e, spin, hl, isonum, Q, mu);
             levels.insert(e, currentLevel);
@@ -1065,86 +1061,11 @@ void Decay::processENSDFLevels() const
     }
 }
 
-void Decay::splitAdoptedLevelsData() const
-{
-    // create index for adopted levels
-    int laststart = -1;
-    for (int i=0; i < adopt.size(); i++) {
-        const QString &line = adopt.at(i);
-        if (line.startsWith(dNuc.nucid() + "  L ")) {
-            if (laststart > 0)
-                adoptblocks.insert(parseEnsdfEnergy(adopt.at(laststart).mid(9, 10)),
-                                   QStringList(adopt.mid(laststart, i-laststart)));
-            laststart = i;
-        }
-    }
-    if (laststart > 0)
-        adoptblocks.insert(parseEnsdfEnergy(adopt.at(laststart).mid(9, 10)),
-                           QStringList(adopt.mid(laststart, adopt.size()-laststart)));
-}
-
-QStringList Decay::selectAdoptedLevelsDataBlock(double energy) const
-{
-    double idx = findNearest(adoptblocks, energy);
-    if (!std::isfinite(idx))
-        return QStringList();
-
-    Q_ASSERT(adoptblocks.contains(idx));
-
-    if (qAbs(energy - idx) > (adoptedLevelMaxDifference/1000.0*energy))
-        return QStringList();
-
-    return adoptblocks.value(idx);
-}
-
-double Decay::parseEnsdfEnergy(QString estr) const
+int64_t Decay::parseEnsdfEnergy(QString estr) const
 {
     QLocale clocale("C");
     estr.remove('(').remove(')');
-    return clocale.toDouble(estr.trimmed());
-}
-
-double Decay::parseEnsdfMixing(const QString &str, const QString &multipolarity, GammaTransition::DeltaState *state) const
-{
-    QLocale clocale("C");
-    bool convok = false;
-    double delta = 0.0;
-    if (str.isEmpty()) {
-        QString tmp(multipolarity);
-        tmp.remove('(').remove(')');
-        if (tmp.count() == 2)
-            *state = GammaTransition::SignMagnitudeDefined;
-        // else leave deltastate UnknownDelta
-    }
-    else {
-        double tmp = clocale.toDouble(str, &convok);
-        if (convok) {
-            delta = tmp;
-            if (str.contains('+') || str.contains('-'))
-                *state = GammaTransition::SignMagnitudeDefined;
-            else
-                *state = GammaTransition::MagnitudeDefined;
-        }
-        // else leave deltastate UnknownDelta
-    }
-    return delta;
-}
-
-template <typename T>
-double Decay::findNearest(const QMap<double, T> &map, double val) const
-{
-    if (map.isEmpty())
-        return std::numeric_limits<double>::quiet_NaN();
-
-    typename QMap<double, T>::const_iterator i = map.lowerBound(val);
-
-    if (i == map.begin())
-        return i.key();
-
-    if (qAbs(val - (i-1).key()) < qAbs(val - i.key()))
-        return (i-1).key();
-
-    return i.key();
+    return int64_t(clocale.toDouble(estr.trimmed())*1000.+0.5);
 }
 
 double Decay::gauss(const double x, const double sigma) const
