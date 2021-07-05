@@ -54,6 +54,7 @@ private:
 
     Energy m_e;
     double intens;
+    double relintens;
     QString m_mpol;
     UncertainDouble m_delta;
     EnergyLevel *m_start, *m_dest;

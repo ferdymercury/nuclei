@@ -68,8 +68,11 @@ const UncertainDouble & GammaTransition::delta() const
 QString GammaTransition::intensityAsText() const
 {
     QString intensstr;
-    if (!boost::math::isnan(intens))
-        intensstr = QString("%1 %").arg(intens, 0, 'g', 3);
+    if (!boost::math::isnan(relintens))
+    {
+        intensstr = QString("%1 %").arg(relintens, 0, 'g', 2);
+        if(intensstr == "1e+02 %") intensstr = "100 %";
+    }
     return intensstr;
 }
 
@@ -140,6 +143,15 @@ ActiveGraphicsItemGroup *GammaTransition::createGammaGraphicsItem(const QFont &g
     arrow = new QGraphicsLineItem;
     arrow->setPen(m_pen);
 
+    relintens = intens;
+    const size_t nDep = m_start->m_depopulatingTransitions.size();
+    //const size_t nPop = m_start->m_populatingTransitions.size();
+    double total = 0;
+    for(size_t i = 0; i < nDep; ++i)
+    {
+        total += m_start->m_depopulatingTransitions.at(i)->intens;
+    }
+    relintens = intens/total*100;
     QString intensstr = intensityAsText();
     if (!intensstr.isEmpty())
         intensstr += " ";
