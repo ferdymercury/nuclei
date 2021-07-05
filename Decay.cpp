@@ -86,7 +86,7 @@ QGraphicsScene * Decay::levelPlot()
         parentpos = NoParent;
     else if (t == BetaMinus)
         parentpos = LeftParent;
-
+    parentpos = NoParent;//hack for PG
     // create level items
     foreach (EnergyLevel *level, dNuc->levels()) {
         QFontMetrics stdBoldFontMetrics(stdBoldFont);
@@ -133,7 +133,7 @@ QGraphicsScene * Decay::levelPlot()
         scene->addItem(level->item);
 
         // plot level feeding arrow if necessary
-        if (level->normalizedFeedIntensity().uncertaintyType() != UncertainDouble::UndefinedType) {
+        if (false && level->normalizedFeedIntensity().uncertaintyType() != UncertainDouble::UndefinedType) {
             // create line
             level->grafeedarrow = new QGraphicsLineItem;
             level->grafeedarrow->setPen((level->feedintens >= 10.0) ? intenseFeedArrowPen : feedArrowPen);
@@ -692,7 +692,7 @@ void Decay::alignGraphicsItems()
         parentpos = NoParent;
     else if (t == BetaMinus)
         parentpos = LeftParent;
-
+    parentpos = NoParent;//hack for PG
     QFontMetrics stdFontMetrics(stdFont);
     QFontMetrics stdBoldFontMetrics(stdBoldFont);
     QFontMetrics parentHlFontMetrics(parentHlFont);
