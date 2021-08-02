@@ -124,7 +124,7 @@ ActiveGraphicsItemGroup *GammaTransition::createGammaGraphicsItem(const QFont &g
         return item;
 
     m_pen = gammaPen;
-    if (intens >= 5.0)
+    if (intens >= 5.0 && false)
         m_pen = intenseGammaPen;
 
     // group origin is set to the start level!
