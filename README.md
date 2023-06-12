@@ -1,3 +1,6 @@
+
+# This repository has been deprecated. Use instead: https://github.com/martukas/nuclei/
+
 Note: this repository has been imported in Apr 2021 from https://sourceforge.net/projects/nuclei/ in order to adapt it to Qt5.
 
 Nuclei is a software tool for the displaying of nuclear decay schemes and estimated energy spectra, the calculation of angular γ emission anisotropies, and the automated search for appropriate decay cascade properties. It uses the Evaluated Nuclear Structure Data Files (ENSDF).
